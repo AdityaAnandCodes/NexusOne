@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   let client: MongoClient | null = null;
-  
+
   try {
     // Get the current session
     const session = await auth();
@@ -41,25 +41,25 @@ export async function GET(request: NextRequest) {
     }
 
     if (!user) {
-      console.log("No user found, creating new user record")
-      
+      console.log("No user found, creating new user record");
+
       // User might have a NextAuth session but no user record in our system
       // This can happen if the user record was manually deleted
       // Let's create a basic user record for them
       const newUser = {
         email: sessionEmail,
-        name: session.user.name || sessionEmail.split('@')[0],
+        name: session.user.name || sessionEmail.split("@")[0],
         image: session.user.image || null,
-        role: 'employee', // Default role - will need to be updated during onboarding
+        role: "employee", // Default role - will need to be updated during onboarding
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      };
 
       try {
-        const insertResult = await db.collection('users').insertOne(newUser)
-        console.log("Created new user record:", insertResult.insertedId)
-        
+        const insertResult = await db.collection("users").insertOne(newUser);
+        console.log("Created new user record:", insertResult.insertedId);
+
         return NextResponse.json({
           hasCompany: false,
           hasRole: false,
@@ -68,12 +68,12 @@ export async function GET(request: NextRequest) {
           debug: {
             searchedEmail: sessionEmail,
             foundUser: false,
-            createdNewUser: true
-          }
-        })
+            createdNewUser: true,
+          },
+        });
       } catch (createError) {
-        console.error("Error creating user record:", createError)
-        
+        console.error("Error creating user record:", createError);
+
         return NextResponse.json({
           hasCompany: false,
           hasRole: false,
@@ -82,18 +82,25 @@ export async function GET(request: NextRequest) {
           debug: {
             searchedEmail: sessionEmail,
             foundUser: false,
-            createUserFailed: true
-          }
-        })
+            createUserFailed: true,
+          },
+        });
       }
     }
 
     // Check if user has selected a role (anything other than default 'employee')
-    const hasRole = user.role && user.role !== 'employee'
-    
+    const hasRole = user.role && user.role !== "employee";
+
     // Check if user has a companyId
     const hasCompany = !!user.companyId;
-    console.log("Final result - hasCompany:", hasCompany, "hasRole:", hasRole, "userRole:", user.role);
+    console.log(
+      "Final result - hasCompany:",
+      hasCompany,
+      "hasRole:",
+      hasRole,
+      "userRole:",
+      user.role
+    );
 
     return NextResponse.json({
       hasCompany,
@@ -108,7 +115,7 @@ export async function GET(request: NextRequest) {
         userHasCompanyId: hasCompany,
         userCompanyId: user.companyId,
         userRole: user.role,
-        hasRoleCalculation: `${user.role} && ${user.role} !== 'employee' = ${hasRole}`
+        hasRoleCalculation: `${user.role} && ${user.role} !== 'employee' = ${hasRole}`,
       },
     });
   } catch (error) {

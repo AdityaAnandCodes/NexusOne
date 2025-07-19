@@ -1,7 +1,7 @@
 // Google Workspace Admin SDK Integration
 // This file shows how to integrate with Google Workspace to create real email accounts
 
-import { google } from 'googleapis';
+import { google } from "googleapis";
 
 interface GoogleWorkspaceConfig {
   clientEmail: string;
@@ -16,17 +16,17 @@ export class GoogleWorkspaceEmailProvider {
 
   constructor(config: GoogleWorkspaceConfig) {
     this.config = config;
-    
+
     // Initialize Google Auth with service account
     const auth = new google.auth.JWT(
       config.clientEmail,
       undefined,
-      config.privateKey.replace(/\\n/g, '\n'),
-      ['https://www.googleapis.com/auth/admin.directory.user'],
+      config.privateKey.replace(/\\n/g, "\n"),
+      ["https://www.googleapis.com/auth/admin.directory.user"],
       config.adminEmail
     );
 
-    this.admin = google.admin({ version: 'directory_v1', auth });
+    this.admin = google.admin({ version: "directory_v1", auth });
   }
 
   async createEmployeeEmailAccount(
@@ -46,19 +46,18 @@ export class GoogleWorkspaceEmailProvider {
           },
           password: password,
           changePasswordAtNextLogin: true, // Force password change on first login
-          orgUnitPath: department ? `/Departments/${department}` : '/',
+          orgUnitPath: department ? `/Departments/${department}` : "/",
           includeInGlobalAddressList: true,
         },
       });
 
       console.log(`✅ Google Workspace account created: ${email}`);
       return { success: true, user: user.data };
-      
     } catch (error: any) {
-      console.error('Failed to create Google Workspace account:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Failed to create email account' 
+      console.error("Failed to create Google Workspace account:", error);
+      return {
+        success: false,
+        error: error.message || "Failed to create email account",
       };
     }
   }
@@ -69,7 +68,7 @@ export class GoogleWorkspaceEmailProvider {
       console.log(`🗑️ Google Workspace account deleted: ${email}`);
       return true;
     } catch (error) {
-      console.error('Failed to delete Google Workspace account:', error);
+      console.error("Failed to delete Google Workspace account:", error);
       return false;
     }
   }
@@ -78,12 +77,12 @@ export class GoogleWorkspaceEmailProvider {
     try {
       await this.admin.users.update({
         userKey: email,
-        requestBody: { suspended: true }
+        requestBody: { suspended: true },
       });
       console.log(`⏸️ Google Workspace account suspended: ${email}`);
       return true;
     } catch (error) {
-      console.error('Failed to suspend Google Workspace account:', error);
+      console.error("Failed to suspend Google Workspace account:", error);
       return false;
     }
   }
@@ -92,15 +91,15 @@ export class GoogleWorkspaceEmailProvider {
     try {
       await this.admin.users.update({
         userKey: email,
-        requestBody: { 
+        requestBody: {
           password: newPassword,
-          changePasswordAtNextLogin: true
-        }
+          changePasswordAtNextLogin: true,
+        },
       });
       console.log(`🔐 Password reset for: ${email}`);
       return true;
     } catch (error) {
-      console.error('Failed to reset password:', error);
+      console.error("Failed to reset password:", error);
       return false;
     }
   }
@@ -117,14 +116,14 @@ export async function createRealGoogleWorkspaceAccount(
     clientEmail: process.env.GOOGLE_WORKSPACE_CLIENT_EMAIL!,
     privateKey: process.env.GOOGLE_WORKSPACE_PRIVATE_KEY!,
     adminEmail: process.env.GOOGLE_WORKSPACE_ADMIN_EMAIL!,
-    domain: companyDomain
+    domain: companyDomain,
   };
 
   const provider = new GoogleWorkspaceEmailProvider(config);
-  
-  const [firstName, ...lastNameParts] = employeeName.split(' ');
-  const lastName = lastNameParts.join(' ') || firstName;
-  
+
+  const [firstName, ...lastNameParts] = employeeName.split(" ");
+  const lastName = lastNameParts.join(" ") || firstName;
+
   // Generate email like: john.doe@company.com
   const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${companyDomain}`;
   const password = generateTemporaryPassword(12);

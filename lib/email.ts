@@ -1,63 +1,66 @@
-import nodemailer from 'nodemailer'
+import nodemailer from "nodemailer";
 
 // Email configuration
 const createTransporter = async () => {
   // For development, we'll use Ethereal Email (fake SMTP) if no real credentials provided
-  const useEthereal = process.env.USE_ETHEREAL_EMAIL === 'true' || 
-                     !process.env.SMTP_USER || 
-                     !process.env.SMTP_PASS
+  const useEthereal =
+    process.env.USE_ETHEREAL_EMAIL === "true" ||
+    !process.env.SMTP_USER ||
+    !process.env.SMTP_PASS;
 
   if (useEthereal) {
     // Create test account for development
-    const testAccount = await nodemailer.createTestAccount()
-    console.log('Using Ethereal Email for testing')
-    console.log('Test email credentials:', {
+    const testAccount = await nodemailer.createTestAccount();
+    console.log("Using Ethereal Email for testing");
+    console.log("Test email credentials:", {
       user: testAccount.user,
-      pass: testAccount.pass
-    })
-    
+      pass: testAccount.pass,
+    });
+
     return nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
+      host: "smtp.ethereal.email",
       port: 587,
       secure: false,
       auth: {
         user: testAccount.user,
         pass: testAccount.pass,
       },
-    })
+    });
   } else {
     // Use real SMTP configuration
     return nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: parseInt(process.env.SMTP_PORT || "587"),
       secure: false, // true for 465, false for other ports
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
-    })
+    });
   }
-}
+};
 
 export interface SendEmployeeInvitationEmailParams {
-  recipientEmail: string
-  recipientName?: string
-  companyName: string
-  inviterName: string
-  inviterEmail: string
-  role: string
-  department?: string
-  position?: string
-  invitationUrl: string
+  recipientEmail: string;
+  recipientName?: string;
+  companyName: string;
+  inviterName: string;
+  inviterEmail: string;
+  role: string;
+  department?: string;
+  position?: string;
+  invitationUrl: string;
   employeeCredentials?: {
-    generatedEmail: string
-    temporaryPassword: string
-    setupInstructions?: string[]
-    provider?: string
-  }
+    generatedEmail: string;
+    temporaryPassword: string;
+    setupInstructions?: string[];
+    provider?: string;
+  };
 }
 
-export async function sendEmployeeInvitationEmail(params: SendEmployeeInvitationEmailParams) {
+export async function sendEmployeeInvitationEmail(
+  params: SendEmployeeInvitationEmailParams
+) {
   const {
     recipientEmail,
     recipientName,
@@ -68,10 +71,10 @@ export async function sendEmployeeInvitationEmail(params: SendEmployeeInvitation
     department,
     position,
     invitationUrl,
-    employeeCredentials
-  } = params
+    employeeCredentials,
+  } = params;
 
-  const transporter = await createTransporter()
+  const transporter = await createTransporter();
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -100,7 +103,7 @@ export async function sendEmployeeInvitationEmail(params: SendEmployeeInvitation
         </div>
         
         <div class="content">
-          <h2>Hi ${recipientName || 'there'}!</h2>
+          <h2>Hi ${recipientName || "there"}!</h2>
           
           <p><strong>${inviterName}</strong> from <strong>${companyName}</strong> has invited you to join their team on NexusOne.</p>
           
@@ -108,36 +111,55 @@ export async function sendEmployeeInvitationEmail(params: SendEmployeeInvitation
             <h3>Invitation Details</h3>
             <p><strong>Company:</strong> ${companyName}</p>
             <p><strong>Role:</strong> ${role}</p>
-            ${department ? `<p><strong>Department:</strong> ${department}</p>` : ''}
-            ${position ? `<p><strong>Position:</strong> ${position}</p>` : ''}
+            ${
+              department
+                ? `<p><strong>Department:</strong> ${department}</p>`
+                : ""
+            }
+            ${position ? `<p><strong>Position:</strong> ${position}</p>` : ""}
             <p><strong>Invited by:</strong> ${inviterName} (${inviterEmail})</p>
           </div>
           
-          ${employeeCredentials ? `
+          ${
+            employeeCredentials
+              ? `
           <div class="details" style="border-left: 4px solid #10b981;">
             <h3>🔐 Your Company Email Credentials</h3>
             <p style="color: #059669; font-weight: bold;">
-              ${employeeCredentials.provider || 'An email account'} has been set up for you!
+              ${
+                employeeCredentials.provider || "An email account"
+              } has been set up for you!
             </p>
             <p><strong>Email:</strong> ${employeeCredentials.generatedEmail}</p>
-            <p><strong>Temporary Password:</strong> <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">${employeeCredentials.temporaryPassword}</code></p>
+            <p><strong>Temporary Password:</strong> <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">${
+              employeeCredentials.temporaryPassword
+            }</code></p>
             
-            ${employeeCredentials.setupInstructions ? `
+            ${
+              employeeCredentials.setupInstructions
+                ? `
             <div style="margin-top: 15px; padding: 10px; background: #f0f9ff; border-radius: 6px;">
               <p style="font-weight: bold; margin-bottom: 8px;">📋 Setup Instructions:</p>
               <ol style="margin: 0; padding-left: 20px; color: #374151;">
-                ${employeeCredentials.setupInstructions.map(instruction => 
-                  `<li style="margin-bottom: 4px;">${instruction}</li>`
-                ).join('')}
+                ${employeeCredentials.setupInstructions
+                  .map(
+                    (instruction) =>
+                      `<li style="margin-bottom: 4px;">${instruction}</li>`
+                  )
+                  .join("")}
               </ol>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
             
             <p style="color: #6b7280; font-size: 14px; margin-top: 15px;">
               📝 <strong>Important:</strong> Please change your password after first login for security.
             </p>
           </div>
-          ` : ''}
+          `
+              : ""
+          }
           
           <p>To get started, click the button below to sign up and join your new team:</p>
           
@@ -165,29 +187,33 @@ export async function sendEmployeeInvitationEmail(params: SendEmployeeInvitation
       </div>
     </body>
     </html>
-  `
+  `;
 
   const textContent = `
 Welcome to ${companyName}!
 
-Hi ${recipientName || 'there'}!
+Hi ${recipientName || "there"}!
 
 ${inviterName} from ${companyName} has invited you to join their team on NexusOne.
 
 Invitation Details:
 - Company: ${companyName}
 - Role: ${role}
-${department ? `- Department: ${department}` : ''}
-${position ? `- Position: ${position}` : ''}
+${department ? `- Department: ${department}` : ""}
+${position ? `- Position: ${position}` : ""}
 - Invited by: ${inviterName} (${inviterEmail})
 
-${employeeCredentials ? `
+${
+  employeeCredentials
+    ? `
 Company Email Credentials:
 - Email: ${employeeCredentials.generatedEmail}
 - Temporary Password: ${employeeCredentials.temporaryPassword}
 
 IMPORTANT: Please change your password after first login for security.
-` : ''}
+`
+    : ""
+}
 
 To get started, visit this link to sign up and join your new team:
 ${invitationUrl}
@@ -195,60 +221,67 @@ ${invitationUrl}
 This invitation was sent to ${recipientEmail}. If you didn't expect this invitation, you can safely ignore this email.
 
 © 2025 NexusOne. Streamlining employee onboarding.
-  `
+  `;
 
   const mailOptions = {
     from: {
       name: `${companyName} via NexusOne`,
-      address: process.env.SMTP_USER || process.env.GOOGLE_EMAIL || 'noreply@nexusone.com'
+      address:
+        process.env.SMTP_USER ||
+        process.env.GOOGLE_EMAIL ||
+        "noreply@nexusone.com",
     },
     to: recipientEmail,
     subject: `Welcome to ${companyName} - Join Your New Team`,
     text: textContent,
     html: htmlContent,
-  }
+  };
 
   try {
-    const info = await transporter.sendMail(mailOptions)
-    
+    const info = await transporter.sendMail(mailOptions);
+
     // For Ethereal email, log the preview URL
-    const useEthereal = process.env.USE_ETHEREAL_EMAIL === 'true' || 
-                       !process.env.SMTP_USER || 
-                       !process.env.SMTP_PASS
-    
+    const useEthereal =
+      process.env.USE_ETHEREAL_EMAIL === "true" ||
+      !process.env.SMTP_USER ||
+      !process.env.SMTP_PASS;
+
     if (useEthereal) {
-      console.log('📧 Test email sent! Preview URL:', nodemailer.getTestMessageUrl(info))
+      console.log(
+        "📧 Test email sent! Preview URL:",
+        nodemailer.getTestMessageUrl(info)
+      );
     } else {
-      console.log('📧 Real email sent via Gmail SMTP!')
+      console.log("📧 Real email sent via Gmail SMTP!");
     }
-    
-    console.log('Email sent successfully:', {
+
+    console.log("Email sent successfully:", {
       messageId: info.messageId,
       recipient: recipientEmail,
       company: companyName,
-      previewUrl: useEthereal ? nodemailer.getTestMessageUrl(info) : null
-    })
-    
-    return { 
-      success: true, 
+      previewUrl: useEthereal ? nodemailer.getTestMessageUrl(info) : null,
+    });
+
+    return {
+      success: true,
       messageId: info.messageId,
-      previewUrl: useEthereal ? nodemailer.getTestMessageUrl(info) : null
-    }
+      previewUrl: useEthereal ? nodemailer.getTestMessageUrl(info) : null,
+    };
   } catch (error) {
-    console.error('Failed to send email:', error)
-    throw new Error(`Failed to send invitation email: ${error}`)
+    console.error("Failed to send email:", error);
+    throw new Error(`Failed to send invitation email: ${error}`);
   }
 }
 
 // Test email configuration
 export async function testEmailConfiguration() {
   try {
-    const transporter = await createTransporter()
-    await transporter.verify()
-    console.log('Email configuration is valid')
-    return true
+    const transporter = await createTransporter();
+    await transporter.verify();
+    console.log("Email configuration is valid");
+    return true;
   } catch (error) {
-    console.error('Email configuration error:', error)
-    return false
+    console.error("Email configuration error:", error);
+    return false;
   }
 }

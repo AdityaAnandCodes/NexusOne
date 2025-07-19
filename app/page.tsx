@@ -25,7 +25,9 @@ export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [hasCompany, setHasCompany] = useState<boolean | null>(null);
-  const [needsRoleSelection, setNeedsRoleSelection] = useState<boolean | null>(null);
+  const [needsRoleSelection, setNeedsRoleSelection] = useState<boolean | null>(
+    null
+  );
   const [isCheckingCompany, setIsCheckingCompany] = useState(false);
 
   // Check if authenticated user has a company
@@ -90,7 +92,8 @@ export default function Home() {
     if (status === "loading" || isCheckingCompany) return "Loading...";
     if (!session) return "Get Started";
     if (hasCompany === true) return "Go to Dashboard";
-    if (needsRoleSelection === true || hasCompany === false) return "Choose Your Role";
+    if (needsRoleSelection === true || hasCompany === false)
+      return "Choose Your Role";
     return "Get Started";
   };
 

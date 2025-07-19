@@ -12,6 +12,7 @@ import {
   Building2,
   Users,
   MessageSquare,
+  MessageCircle,
   Settings,
   BarChart3,
   Plus,
@@ -140,15 +141,62 @@ export default function Dashboard() {
               <CardContent className="p-6 text-center">
                 <Users className="h-8 w-8 text-blue-400 mx-auto mb-2" />
                 <h3 className="text-white font-medium">Manage Employees</h3>
+                <p className="text-white/60 text-sm">
+                  Add & invite team members
+                </p>
               </CardContent>
             </Card>
           </Link>
 
+          <Link href="/hr/setup">
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-colors cursor-pointer">
+              <CardContent className="p-6 text-center">
+                <Settings className="h-8 w-8 text-green-400 mx-auto mb-2" />
+                <h3 className="text-white font-medium">Company Setup</h3>
+                <p className="text-white/60 text-sm">
+                  Configure policies & onboarding
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/hr/onboarding">
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-colors cursor-pointer">
+              <CardContent className="p-6 text-center">
+                <Users className="h-8 w-8 text-orange-400 mx-auto mb-2" />
+                <h3 className="text-white font-medium">
+                  Onboarding Management
+                </h3>
+                <p className="text-white/60 text-sm">
+                  Review employee progress
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/onboarding">
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-colors cursor-pointer">
+              <CardContent className="p-6 text-center">
+                <MessageCircle className="h-8 w-8 text-purple-400 mx-auto mb-2" />
+                <h3 className="text-white font-medium">Onboarding Chat</h3>
+                <p className="text-white/60 text-sm">
+                  AI assistant for new hires
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+
+        {/* Secondary Actions */}
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
           <Link href="/onboarding/setup">
             <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-colors cursor-pointer">
               <CardContent className="p-6 text-center">
                 <Settings className="h-8 w-8 text-green-400 mx-auto mb-2" />
                 <h3 className="text-white font-medium">Setup Onboarding</h3>
+                <p className="text-white/60 text-sm">
+                  Configure onboarding flow
+                </p>
               </CardContent>
             </Card>
           </Link>
@@ -158,6 +206,7 @@ export default function Dashboard() {
               <CardContent className="p-6 text-center">
                 <MessageSquare className="h-8 w-8 text-purple-400 mx-auto mb-2" />
                 <h3 className="text-white font-medium">HR Chat</h3>
+                <p className="text-white/60 text-sm">Internal communication</p>
               </CardContent>
             </Card>
           </Link>
@@ -167,6 +216,7 @@ export default function Dashboard() {
               <CardContent className="p-6 text-center">
                 <BarChart3 className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
                 <h3 className="text-white font-medium">Analytics</h3>
+                <p className="text-white/60 text-sm">Performance insights</p>
               </CardContent>
             </Card>
           </Link>

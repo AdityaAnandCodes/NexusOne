@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Processing API Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #1e293b;
+            margin-bottom: 30px;
+        }
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            background: #f8fafc;
+        }
+        .upload-area.dragover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        input[type="file"] {
+            margin: 20px 0;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+        }
+        .error {
+            background: #fef2f2;
+            border-left-color: #ef4444;
+        }
+        .loading {
+            background: #fefbf3;
+            border-left-color: #f59e0b;
+        }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow: auto;
+            font-size: 14px;
+        }
+        .health-check {
+            background: #ecfdf5;
+            border: 1px solid #bbf7d0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Resume Processing API Test</h1>
+        
+        <div id="healthStatus" class="health-check">
+            <strong>🔍 Checking API health...</strong>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <h3>📄 Upload Resume for AI Processing</h3>
+            <p>Drag and drop a resume file here, or click to select</p>
+            <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt">
+            <br>
+            <button onclick="processResume()" id="processBtn" disabled>
+                Process Resume with Gemini AI
+            </button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+
+        // Check API health on page load
+        async function checkHealth() {
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                const data = await response.json();
+                
+                document.getElementById('healthStatus').innerHTML = `
+                    <strong>✅ API Health: ${data.status}</strong><br>
+                    <small>${data.message} (${data.timestamp})</small>
+                `;
+                document.getElementById('healthStatus').style.background = '#ecfdf5';
+            } catch (error) {
+                document.getElementById('healthStatus').innerHTML = `
+                    <strong>❌ API Health: Failed</strong><br>
+                    <small>Cannot connect to backend server. Make sure it's running on port 5000.</small>
+                `;
+                document.getElementById('healthStatus').style.background = '#fef2f2';
+                document.getElementById('healthStatus').style.borderColor = '#fecaca';
+            }
+        }
+
+        // File input handling
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const processBtn = document.getElementById('processBtn');
+
+        fileInput.addEventListener('change', function(e) {
+            selectedFile = e.target.files[0];
+            if (selectedFile) {
+                processBtn.disabled = false;
+                uploadArea.innerHTML += `<p><strong>Selected:</strong> ${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)</p>`;
+            }
+        });
+
+        // Drag and drop handling
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                selectedFile = files[0];
+                fileInput.files = files;
+                processBtn.disabled = false;
+                uploadArea.innerHTML += `<p><strong>Selected:</strong> ${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)</p>`;
+            }
+        });
+
+        // Process resume function
+        async function processResume() {
+            if (!selectedFile) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <div class="result loading">
+                    <div class="spinner"></div>
+                    <strong> Processing resume with Gemini AI...</strong>
+                    <p>Extracting name and email information from ${selectedFile.name}</p>
+                </div>
+            `;
+
+            processBtn.disabled = true;
+            processBtn.innerHTML = 'Processing...';
+
+            try {
+                const formData = new FormData();
+                formData.append('resume', selectedFile);
+
+                const startTime = Date.now();
+                const response = await fetch('http://localhost:5000/api/process-resume', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                const processingTime = ((Date.now() - startTime) / 1000).toFixed(2);
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result">
+                            <h3>✅ Processing Successful!</h3>
+                            <p><strong>Processing Time:</strong> ${processingTime} seconds</p>
+                            
+                            <h4>📋 Extracted Information:</h4>
+                            <div style="background: white; padding: 15px; border-radius: 6px; margin: 10px 0;">
+                                <p><strong>Name:</strong> ${result.data.name || 'Not found'}</p>
+                                <p><strong>Email:</strong> ${result.data.email || 'Not found'}</p>
+                                <p><strong>Phone:</strong> ${result.data.phone || 'Not found'}</p>
+                                <p><strong>Skills:</strong> ${result.data.skills && result.data.skills.length > 0 ? result.data.skills.join(', ') : 'Not found'}</p>
+                            </div>
+
+                            ${result.data.confidence ? `
+                                <h4>🎯 Confidence Scores:</h4>
+                                <div style="background: white; padding: 15px; border-radius: 6px; margin: 10px 0;">
+                                    <p><strong>Name Confidence:</strong> ${(result.data.confidence.name * 100).toFixed(1)}%</p>
+                                    <p><strong>Email Confidence:</strong> ${(result.data.confidence.email * 100).toFixed(1)}%</p>
+                                    <p><strong>Phone Confidence:</strong> ${(result.data.confidence.phone * 100).toFixed(1)}%</p>
+                                    <p><strong>Skills Confidence:</strong> ${(result.data.confidence.skills * 100).toFixed(1)}%</p>
+                                </div>
+                            ` : ''}
+
+                            ${result.data.warnings && result.data.warnings.length > 0 ? `
+                                <h4>⚠️ Warnings:</h4>
+                                <ul>
+                                    ${result.data.warnings.map(warning => `<li>${warning}</li>`).join('')}
+                                </ul>
+                            ` : ''}
+
+                            <h4>🔍 Full Response:</h4>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ Processing Failed</h3>
+                            <p><strong>Error:</strong> ${result.error}</p>
+                            <p><strong>Message:</strong> ${result.message}</p>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Network Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Make sure the backend server is running on port 5000.</p>
+                    </div>
+                `;
+            } finally {
+                processBtn.disabled = false;
+                processBtn.innerHTML = 'Process Resume with Gemini AI';
+            }
+        }
+
+        // Check health on page load
+        checkHealth();
+    </script>
+</body>
+</html>

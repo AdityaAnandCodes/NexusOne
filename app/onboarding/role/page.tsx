@@ -1,20 +1,26 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Building2, Users, ArrowRight } from "lucide-react"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Building2, Users, ArrowRight } from "lucide-react";
 
 export default function RoleSelectionPage() {
-  const [loading, setLoading] = useState(false)
-  const { data: session } = useSession()
-  const router = useRouter()
+  const [loading, setLoading] = useState(false);
+  const { data: session } = useSession();
+  const router = useRouter();
 
   const handleRoleSelection = async (role: "hr" | "employee") => {
-    setLoading(true)
-    
+    setLoading(true);
+
     try {
       const response = await fetch("/api/user/set-role", {
         method: "POST",
@@ -22,24 +28,24 @@ export default function RoleSelectionPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ role }),
-      })
+      });
 
       if (response.ok) {
         // Redirect based on role
         if (role === "hr") {
-          router.push("/onboarding/company")
+          router.push("/onboarding/company");
         } else {
-          router.push("/onboarding/employee")
+          router.push("/onboarding/employee");
         }
       } else {
-        console.error("Failed to set user role")
+        console.error("Failed to set user role");
       }
     } catch (error) {
-      console.error("Error setting user role:", error)
+      console.error("Error setting user role:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (!session) {
     return (
@@ -48,7 +54,7 @@ export default function RoleSelectionPage() {
           <h1 className="text-xl font-semibold">Please sign in first</h1>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -82,7 +88,7 @@ export default function RoleSelectionPage() {
                 <li>• Set up departments and roles</li>
                 <li>• Access HR dashboard and analytics</li>
               </ul>
-              <Button 
+              <Button
                 onClick={() => handleRoleSelection("hr")}
                 disabled={loading}
                 className="w-full group-hover:bg-blue-700 transition-colors"
@@ -111,7 +117,7 @@ export default function RoleSelectionPage() {
                 <li>• Connect with your team members</li>
                 <li>• View your profile and settings</li>
               </ul>
-              <Button 
+              <Button
                 onClick={() => handleRoleSelection("employee")}
                 disabled={loading}
                 variant="outline"
@@ -131,5 +137,5 @@ export default function RoleSelectionPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

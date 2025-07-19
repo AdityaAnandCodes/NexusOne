@@ -8,15 +8,15 @@ export const freeEmailProviders = [
       "5GB storage per user",
       "Custom domain support",
       "Web and mobile apps",
-      "25MB attachment limit"
+      "25MB attachment limit",
     ],
     setup: [
       "1. Sign up at zoho.com/mail",
       "2. Add your domain",
       "3. Verify domain ownership",
       "4. Create user accounts",
-      "5. Update MX records"
-    ]
+      "5. Update MX records",
+    ],
   },
   {
     name: "Yandex Mail for Domain",
@@ -26,8 +26,8 @@ export const freeEmailProviders = [
       "10GB storage per user",
       "Custom domain support",
       "No ads",
-      "IMAP/POP3 support"
-    ]
+      "IMAP/POP3 support",
+    ],
   },
   {
     name: "ImprovMX (Email Forwarding)",
@@ -37,8 +37,8 @@ export const freeEmailProviders = [
       "Unlimited aliases",
       "Custom domain",
       "Easy setup",
-      "Forward to any email"
-    ]
+      "Forward to any email",
+    ],
   },
   {
     name: "ForwardEmail.net",
@@ -48,9 +48,9 @@ export const freeEmailProviders = [
       "Open source",
       "Privacy focused",
       "Unlimited aliases",
-      "Custom domain"
-    ]
-  }
+      "Custom domain",
+    ],
+  },
 ];
 
 export function generateEmailWithFreeProvider(
@@ -58,8 +58,8 @@ export function generateEmailWithFreeProvider(
   companyDomain: string,
   provider: "zoho" | "yandex" | "improvmx" = "zoho"
 ) {
-  const cleanName = employeeName.toLowerCase().replace(/[^a-z0-9]/g, '');
-  
+  const cleanName = employeeName.toLowerCase().replace(/[^a-z0-9]/g, "");
+
   switch (provider) {
     case "zoho":
       return {
@@ -70,10 +70,10 @@ export function generateEmailWithFreeProvider(
           "1. Admin sets up domain in Zoho Mail",
           "2. Creates user account",
           "3. Employee accesses via mail.zoho.com",
-          "4. Can use email clients via IMAP"
-        ]
+          "4. Can use email clients via IMAP",
+        ],
       };
-    
+
     case "improvmx":
       return {
         email: `${cleanName}@${companyDomain}`,
@@ -83,10 +83,10 @@ export function generateEmailWithFreeProvider(
           "1. Admin adds domain to ImprovMX",
           "2. Sets up forwarding rule",
           "3. Employee receives emails at personal address",
-          "4. Can reply using company email"
-        ]
+          "4. Can reply using company email",
+        ],
       };
-    
+
     default:
       return generateEmailWithFreeProvider(employeeName, companyDomain, "zoho");
   }

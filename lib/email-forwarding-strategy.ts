@@ -13,12 +13,12 @@ export function setupEmailForwarding(
   employeePersonalEmail: string,
   companyEmail: string = "yourcompany@gmail.com"
 ): EmailForwardingSetup {
-  const cleanName = employeeName.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const [emailPart, domain] = companyEmail.split('@');
-  
+  const cleanName = employeeName.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const [emailPart, domain] = companyEmail.split("@");
+
   // Create alias using Gmail + system
   const employeeAlias = `${emailPart}+${cleanName}@${domain}`;
-  
+
   return {
     companyEmail,
     employeeAlias,
@@ -29,8 +29,8 @@ export function setupEmailForwarding(
       "3. Create a new filter with criteria:",
       `   - To: ${employeeAlias}`,
       "4. Choose action: Forward to " + employeePersonalEmail,
-      "5. Employee can send emails as the alias from their personal account"
-    ]
+      "5. Employee can send emails as the alias from their personal account",
+    ],
   };
 }
 
@@ -41,6 +41,6 @@ export function getEmployeeSendingInstructions(alias: string): string[] {
     "1. In your personal Gmail, go to Settings > Accounts and Import",
     "2. Click 'Add another email address'",
     `3. Add: ${alias}`,
-    "4. When composing emails, select this address in the 'From' field"
+    "4. When composing emails, select this address in the 'From' field",
   ];
 }

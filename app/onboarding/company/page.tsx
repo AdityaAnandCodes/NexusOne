@@ -70,14 +70,14 @@ export default function CompanyOnboarding() {
 
         if (response.ok) {
           const { companyId, refresh } = result;
-          
+
           if (refresh) {
             // Company created successfully, force session refresh
             console.log("Company created, refreshing session...");
-            
+
             // Add a small delay to ensure database consistency
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
             // Force a full page reload to refresh the session
             window.location.href = "/dashboard";
           } else {
