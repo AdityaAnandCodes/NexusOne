@@ -1,0 +1,55 @@
+[
+  {
+    "userId": "235e8b03-07cc-81a9-a86e-00279a4fe44c",
+    "email": "rakshabv.work@gmail.com",
+    "pageId": "235e8b03-07cc-814a-922a-d903b9cc930b",
+    "permission": "view",
+    "type": "page",
+    "status": "sent",
+    "timestamp": "2025-07-19T10:59:50.412Z"
+  },
+  {
+    "userId": "235e8b03-07cc-81a9-a86e-00279a4fe44c",
+    "email": "rakshabv.work@gmail.com",
+    "type": "workspace",
+    "status": "pending",
+    "timestamp": "2025-07-19T11:00:28.538Z"
+  },
+  {
+    "userId": "235e8b03-07cc-81a9-a86e-00279a4fe44c",
+    "email": "rakshabv.work@gmail.com",
+    "pageId": "235e8b03-07cc-814a-922a-d903b9cc930b",
+    "permission": "fullaccess",
+    "type": "page",
+    "status": "sent",
+    "timestamp": "2025-07-19T11:05:58.575Z"
+  },
+  {
+    "userId": "235e8b03-07cc-81a9-a86e-00279a4fe44c",
+    "email": "rakshabv.work@gmail.com",
+    "pageId": "235e8b03-07cc-814a-922a-d903b9cc930b",
+    "permission": "view",
+    "type": "page",
+    "status": "sent",
+    "timestamp": "2025-07-19T11:06:18.761Z"
+  },
+  {
+    "userId": "235e8b03-07cc-81a9-a86e-00279a4fe44c",
+    "email": "rakshabv.work@gmail.com",
+    "pageId": "235e8b03-07cc-814a-922a-d903b9cc930b",
+    "permission": "edit",
+    "type": "page",
+    "status": "sent",
+    "timestamp": "2025-07-19T11:08:40.762Z"
+  },
+  {
+    "userId": "235e8b03-07cc-81a9-a86e-00279a4fe44c",
+    "email": "rakshabv.work@gmail.com",
+    "pageId": "235e8b03-07cc-814a-922a-d903b9cc930b",
+    "permission": "fullaccess",
+    "type": "page",
+    "status": "fallback_to_manual",
+    "timestamp": "2025-07-19T11:26:53.137Z",
+    "external_service_error": "fetch failed"
+  }
+]

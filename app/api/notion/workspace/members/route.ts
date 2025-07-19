@@ -1,5 +1,4 @@
-//api/notion/test/route.ts
-
+// api/notion/workspace/members/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
@@ -8,18 +7,6 @@ import { Client } from "@notionhq/client";
 interface AuthData {
   access_token: string;
   workspace_name: string;
-}
-
-interface NotionPage {
-  id: string;
-  properties?: {
-    title?: {
-      title?: Array<{
-        plain_text?: string;
-      }>;
-    };
-  };
-  url: string;
 }
 
 export async function GET(request: NextRequest) {
@@ -40,26 +27,28 @@ export async function GET(request: NextRequest) {
       auth: authData.access_token,
     });
 
-    // Test API call - get pages
-    const pages = await notion.search({
-      filter: {
-        property: "object",
-        value: "page",
-      },
-      page_size: 10,
+    // Get workspace users
+    const users = await notion.users.list({
+      page_size: 100,
     });
+
+    const members = users.results.map((user: any) => ({
+      id: user.id,
+      name: user.name || user.email || "Unknown User",
+      email: user.person?.email || "No email",
+      type: user.type || "person",
+      avatar_url: user.avatar_url,
+    }));
 
     return NextResponse.json({
       success: true,
-      workspace: authData.workspace_name,
-      pages: pages.results.map((page: NotionPage) => ({
-        id: page.id,
-        title: page.properties?.title?.title?.[0]?.plain_text || "Untitled",
-        url: page.url,
-      })),
+      members: members,
     });
   } catch (error) {
-    console.error("Test API error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("Get workspace members error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch workspace members" },
+      { status: 500 }
+    );
   }
 }

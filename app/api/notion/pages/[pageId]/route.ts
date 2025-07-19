@@ -1,5 +1,4 @@
-//api/notion/test/route.ts
-
+// api/notion/pages/[pageId]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
@@ -10,21 +9,13 @@ interface AuthData {
   workspace_name: string;
 }
 
-interface NotionPage {
-  id: string;
-  properties?: {
-    title?: {
-      title?: Array<{
-        plain_text?: string;
-      }>;
-    };
-  };
-  url: string;
-}
-
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { pageId: string } }
+) {
   try {
     const userId = request.cookies.get("notion_user_id")?.value;
+    const { pageId } = params;
 
     if (!userId) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -40,26 +31,25 @@ export async function GET(request: NextRequest) {
       auth: authData.access_token,
     });
 
-    // Test API call - get pages
-    const pages = await notion.search({
-      filter: {
-        property: "object",
-        value: "page",
-      },
-      page_size: 10,
+    // Get page content
+    const page = await notion.pages.retrieve({ page_id: pageId });
+
+    // Get page blocks (content)
+    const blocks = await notion.blocks.children.list({
+      block_id: pageId,
+      page_size: 100,
     });
 
     return NextResponse.json({
       success: true,
-      workspace: authData.workspace_name,
-      pages: pages.results.map((page: NotionPage) => ({
-        id: page.id,
-        title: page.properties?.title?.title?.[0]?.plain_text || "Untitled",
-        url: page.url,
-      })),
+      page: page,
+      blocks: blocks.results,
     });
   } catch (error) {
-    console.error("Test API error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("Get page content error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch page content" },
+      { status: 500 }
+    );
   }
 }
