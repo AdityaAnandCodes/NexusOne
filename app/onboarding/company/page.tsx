@@ -69,9 +69,21 @@ export default function CompanyOnboarding() {
         console.log("API Response:", result);
 
         if (response.ok) {
-          const { companyId } = result;
-          // Redirect to dashboard
-          router.push("/dashboard");
+          const { companyId, refresh } = result;
+          
+          if (refresh) {
+            // Company created successfully, force session refresh
+            console.log("Company created, refreshing session...");
+            
+            // Add a small delay to ensure database consistency
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Force a full page reload to refresh the session
+            window.location.href = "/dashboard";
+          } else {
+            // Fallback to normal redirect
+            router.push("/dashboard");
+          }
         } else {
           throw new Error(result.error || "Failed to create company");
         }

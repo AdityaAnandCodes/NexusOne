@@ -48,18 +48,18 @@ export default function AuthCallback() {
           // User already has a company, redirect to dashboard
           router.push("/dashboard");
         } else {
-          // User needs to create or join a company
-          router.push("/onboarding/company");
+          // User needs to select role first, then create or join a company
+          router.push("/onboarding/role");
         }
       } else {
         console.log("API response not ok:", response.status);
-        // If API call fails, default to company onboarding
-        router.push("/onboarding/company");
+        // If API call fails, redirect to role selection
+        router.push("/onboarding/role");
       }
     } catch (error) {
       console.error("Error checking user company status:", error);
-      // If error occurs, default to company onboarding
-      router.push("/onboarding/company");
+      // If error occurs, redirect to role selection
+      router.push("/onboarding/role");
     } finally {
       setIsChecking(false);
     }

@@ -25,6 +25,7 @@ export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [hasCompany, setHasCompany] = useState<boolean | null>(null);
+  const [needsRoleSelection, setNeedsRoleSelection] = useState<boolean | null>(null);
   const [isCheckingCompany, setIsCheckingCompany] = useState(false);
 
   // Check if authenticated user has a company
@@ -41,14 +42,27 @@ export default function Home() {
       if (response.ok) {
         const data = await response.json();
         setHasCompany(data.hasCompany);
+        setNeedsRoleSelection(data.needsRoleSelection || false);
 
         // If user has a company, redirect to dashboard
         if (data.hasCompany) {
           router.push("/dashboard");
         }
+        // If user needs role selection, we'll handle it in handleGetStarted
+      } else if (response.status === 401) {
+        // User not authenticated, hasCompany stays null
+        setHasCompany(null);
+        setNeedsRoleSelection(null);
+      } else {
+        // Other errors, assume user needs onboarding
+        setHasCompany(false);
+        setNeedsRoleSelection(true);
       }
     } catch (error) {
       console.error("Error checking company status:", error);
+      // On error, assume user needs onboarding
+      setHasCompany(false);
+      setNeedsRoleSelection(true);
     } finally {
       setIsCheckingCompany(false);
     }
@@ -56,11 +70,13 @@ export default function Home() {
 
   const handleGetStarted = () => {
     if (session?.user) {
-      // User is authenticated, check if they have a company
-      if (hasCompany === false) {
-        router.push("/onboarding/company");
-      } else if (hasCompany === true) {
+      // User is authenticated, check what they need
+      if (hasCompany === true) {
         router.push("/dashboard");
+      } else if (needsRoleSelection === true) {
+        router.push("/onboarding/role");
+      } else if (hasCompany === false) {
+        router.push("/onboarding/role"); // Default to role selection
       } else {
         // Still checking, do nothing for now
       }
@@ -73,8 +89,8 @@ export default function Home() {
   const getCtaText = () => {
     if (status === "loading" || isCheckingCompany) return "Loading...";
     if (!session) return "Get Started";
-    if (hasCompany === false) return "Create Your Company";
     if (hasCompany === true) return "Go to Dashboard";
+    if (needsRoleSelection === true || hasCompany === false) return "Choose Your Role";
     return "Get Started";
   };
 

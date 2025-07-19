@@ -90,7 +90,62 @@ const UserSchema = new mongoose.Schema<IUser>(
   { timestamps: true }
 );
 
+// Employee invitation schema (for HR to pre-register employees)
+export interface IEmployeeInvitation {
+  _id: string;
+  email: string;
+  companyId: string;
+  role: "hr_manager" | "employee";
+  department?: string;
+  position?: string;
+  invitedBy: string; // User ID of the HR who invited
+  status: "pending" | "accepted" | "expired";
+  invitedAt: Date;
+  acceptedAt?: Date;
+  expiresAt: Date;
+  // Generated email credentials for the employee
+  generatedEmail?: string;
+  temporaryPassword?: string;
+  emailCredentialsGenerated?: boolean;
+}
+
+const EmployeeInvitationSchema = new mongoose.Schema<IEmployeeInvitation>(
+  {
+    email: { type: String, required: true },
+    companyId: { type: String, required: true },
+    role: {
+      type: String,
+      enum: ["hr_manager", "employee"],
+      default: "employee",
+    },
+    department: String,
+    position: String,
+    invitedBy: { type: String, required: true },
+    status: {
+      type: String,
+      enum: ["pending", "accepted", "expired"],
+      default: "pending",
+    },
+    invitedAt: { type: Date, default: Date.now },
+    acceptedAt: Date,
+    expiresAt: { 
+      type: Date, 
+      default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    },
+    // Generated email credentials
+    generatedEmail: String,
+    temporaryPassword: String,
+    emailCredentialsGenerated: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+// Create compound index for unique email per company
+EmployeeInvitationSchema.index({ email: 1, companyId: 1 }, { unique: true });
+
 // Export models
 export const Company =
   mongoose.models.Company || mongoose.model("Company", CompanySchema);
 export const User = mongoose.models.User || mongoose.model("User", UserSchema);
+export const EmployeeInvitation = 
+  mongoose.models.EmployeeInvitation || mongoose.model("EmployeeInvitation", EmployeeInvitationSchema);

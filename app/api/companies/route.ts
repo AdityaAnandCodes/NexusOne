@@ -146,6 +146,7 @@ export async function POST(request: NextRequest) {
       success: true,
       companyId: actualCompanyId,
       message: "Company created successfully",
+      refresh: true, // Signal frontend to refresh session
     });
   } catch (error) {
     console.error("Error creating company:", error);

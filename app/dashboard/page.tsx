@@ -135,11 +135,11 @@ export default function Dashboard() {
 
         {/* Quick Actions */}
         <div className="grid md:grid-cols-4 gap-4 mb-8">
-          <Link href="/employees/invite">
+          <Link href="/hr/employees">
             <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-colors cursor-pointer">
               <CardContent className="p-6 text-center">
-                <Plus className="h-8 w-8 text-blue-400 mx-auto mb-2" />
-                <h3 className="text-white font-medium">Invite Employee</h3>
+                <Users className="h-8 w-8 text-blue-400 mx-auto mb-2" />
+                <h3 className="text-white font-medium">Manage Employees</h3>
               </CardContent>
             </Card>
           </Link>
