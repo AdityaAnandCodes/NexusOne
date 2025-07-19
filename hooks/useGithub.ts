@@ -92,7 +92,7 @@ export function useGitHub(): UseGitHubReturn {
   const getIssues = async (repo: string): Promise<Issue[]> => {
     try {
       const response = await fetch(
-        `/api/github/issues?repo=${encodeURIComponent(repo)}`
+        `/api/integrations/github/issues?repo=${encodeURIComponent(repo)}`
       );
       if (!response.ok) throw new Error("Failed to fetch issues");
 
