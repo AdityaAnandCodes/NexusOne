@@ -10,18 +10,6 @@ interface AuthData {
   workspace_name: string;
 }
 
-interface NotionPage {
-  id: string;
-  properties?: {
-    title?: {
-      title?: Array<{
-        plain_text?: string;
-      }>;
-    };
-  };
-  url: string;
-}
-
 export async function GET(request: NextRequest) {
   try {
     const userId = request.cookies.get("notion_user_id")?.value;
@@ -52,7 +40,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       workspace: authData.workspace_name,
-      pages: pages.results.map((page: NotionPage) => ({
+      pages: pages.results.map((page: any) => ({
         id: page.id,
         title: page.properties?.title?.title?.[0]?.plain_text || "Untitled",
         url: page.url,

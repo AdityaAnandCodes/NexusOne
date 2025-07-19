@@ -17,7 +17,61 @@ interface NotionPage {
   last_edited_time?: string;
 }
 
-export async function GET(request: NextRequest) {
+interface FormattedPage {
+  id: string;
+  title: string;
+  url: string;
+  created_time?: string;
+  last_edited_time?: string;
+}
+
+interface GetPagesResponse {
+  success: boolean;
+  pages: FormattedPage[];
+}
+
+interface CreatePageRequest {
+  title: string;
+  content?: string;
+  parent_page_id?: string;
+}
+
+interface CreatedPageResponse {
+  success: boolean;
+  page: {
+    id: string;
+    title: string;
+    url: string;
+    created_time?: string;
+  };
+}
+
+interface ErrorResponse {
+  error: string;
+}
+
+interface NotionPageProperty {
+  type: string;
+  title?: Array<{
+    plain_text: string;
+  }>;
+}
+
+interface NotionSearchResult {
+  id: string;
+  url: string;
+  created_time?: string;
+  last_edited_time?: string;
+  properties?: Record<string, NotionPageProperty>;
+}
+
+interface NotionSearchResponse {
+  results: NotionSearchResult[];
+}
+
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<GetPagesResponse | ErrorResponse>> {
   try {
     const userId = request.cookies.get("notion_user_id")?.value;
 
@@ -36,21 +90,23 @@ export async function GET(request: NextRequest) {
     });
 
     // Get pages
-    const pages = await notion.search({
+    const pages = (await notion.search({
       filter: {
         property: "object",
         value: "page",
       },
       page_size: 100,
-    });
+    })) as unknown as NotionSearchResponse;
 
-    const formattedPages = pages.results.map((page: any) => ({
-      id: page.id,
-      title: getPageTitle(page),
-      url: page.url,
-      created_time: page.created_time,
-      last_edited_time: page.last_edited_time,
-    }));
+    const formattedPages: FormattedPage[] = pages.results.map(
+      (page: NotionSearchResult) => ({
+        id: page.id,
+        title: getPageTitle(page),
+        url: page.url,
+        created_time: page.created_time,
+        last_edited_time: page.last_edited_time,
+      })
+    );
 
     return NextResponse.json({
       success: true,
@@ -62,7 +118,9 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<CreatedPageResponse | ErrorResponse>> {
   try {
     const userId = request.cookies.get("notion_user_id")?.value;
 
@@ -70,7 +128,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const { title, content, parent_page_id } = await request.json();
+    const { title, content, parent_page_id }: CreatePageRequest =
+      await request.json();
 
     if (!title) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
@@ -134,7 +193,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the page
-    const newPage = await notion.pages.create(pageData);
+    const newPage : any = await notion.pages.create(pageData);
 
     return NextResponse.json({
       success: true,
@@ -145,17 +204,16 @@ export async function POST(request: NextRequest) {
         created_time: newPage.created_time,
       },
     });
-  } catch (error : any) {
+  } catch (error: unknown) {
     console.error("Create page error:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to create page" },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to create page";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
 // Helper function to extract page title
-function getPageTitle(page: any): string {
+function getPageTitle(page: NotionSearchResult): string {
   if (page.properties?.title?.title?.[0]?.plain_text) {
     return page.properties.title.title[0].plain_text;
   }

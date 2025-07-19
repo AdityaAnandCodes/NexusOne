@@ -11,11 +11,11 @@ interface AuthData {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { pageId: string } }
+  { params }: { params: Promise<{ pageId: string }> }
 ) {
   try {
     const userId = request.cookies.get("notion_user_id")?.value;
-    const { pageId } = params;
+    const { pageId } = await params; // Add 'await' here
 
     if (!userId) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });

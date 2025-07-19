@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       body: JSON.stringify({
         grant_type: "authorization_code",
         code: code,
-        redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/callback`,
+        redirect_uri: `${process.env.NEXTAUTH_URL}/api/integrations/notion/callback`,
       }),
     });
 
