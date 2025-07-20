@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, Users, ArrowRight } from "lucide-react";
+import { Building2, Users, ArrowRight, UserPlus } from "lucide-react";
 
 export default function RoleSelectionPage() {
   const [loading, setLoading] = useState(false);
@@ -27,7 +27,7 @@ export default function RoleSelectionPage() {
     setIsVisible(true);
   }, []);
 
-  const handleRoleSelection = async (role: "hr" | "employee") => {
+  const handleRoleSelection = async (role: "hr" | "employee" | "applicant") => {
     setLoading(true);
 
     try {
@@ -43,7 +43,7 @@ export default function RoleSelectionPage() {
         const data = await response.json();
         console.log("Set role response:", data);
 
-        // Redirect based on role and company status
+        // Redirect based on role
         if (role === "hr") {
           router.push("/onboarding/company");
         } else if (role === "employee") {
@@ -52,6 +52,9 @@ export default function RoleSelectionPage() {
           } else {
             router.push("/onboarding");
           }
+        } else if (role === "applicant") {
+          // Redirect to public application page
+          router.push("/apply");
         }
       } else {
         const errorData = await response.json();
@@ -65,6 +68,7 @@ export default function RoleSelectionPage() {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     const checkInvitation = async () => {
       try {
@@ -94,7 +98,7 @@ export default function RoleSelectionPage() {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-8 overflow-hidden">
       <div
-        className={`w-full max-w-4xl relative z-10 transform transition-all duration-1000 ${
+        className={`w-full max-w-6xl relative z-10 transform transition-all duration-1000 ${
           isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
         }`}
       >
@@ -135,7 +139,7 @@ export default function RoleSelectionPage() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-3 gap-6">
           {/* HR Role Card */}
           <Card className="group cursor-pointer transition-all duration-300 hover:shadow-lg border border-gray-200 hover:border-gray-400 bg-white rounded-xl">
             <CardHeader className="text-center pb-4">
@@ -163,7 +167,7 @@ export default function RoleSelectionPage() {
             </CardHeader>
             <CardContent className="text-center">
               <ul
-                className="text-sm opacity-80 mb-6 space-y-2"
+                className="text-sm opacity-80 mb-6 space-y-2 min-h-[120px]"
                 style={{
                   color: "#0E0E0E",
                   fontFamily: "Inter, system-ui, sans-serif",
@@ -173,6 +177,7 @@ export default function RoleSelectionPage() {
                 <li>• Invite and manage employees</li>
                 <li>• Set up departments and roles</li>
                 <li>• Access HR dashboard and analytics</li>
+                <li>• Review job applications and resumes</li>
               </ul>
               <Button
                 onClick={() => handleRoleSelection("hr")}
@@ -181,7 +186,7 @@ export default function RoleSelectionPage() {
                 style={{ fontFamily: "Inter, system-ui, sans-serif" }}
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
-                  Get Started as HR Manager
+                  Get Started as HR
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-900 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
@@ -216,7 +221,7 @@ export default function RoleSelectionPage() {
             </CardHeader>
             <CardContent className="text-center">
               <ul
-                className="text-sm opacity-80 mb-6 space-y-2"
+                className="text-sm opacity-80 mb-6 space-y-2 min-h-[120px]"
                 style={{
                   color: "#0E0E0E",
                   fontFamily: "Inter, system-ui, sans-serif",
@@ -224,8 +229,9 @@ export default function RoleSelectionPage() {
               >
                 <li>• Join your company's workspace</li>
                 <li>• Access company resources and tools</li>
+                <li>• Complete onboarding process</li>
+                <li>• View company policies and documents</li>
                 <li>• Connect with your team members</li>
-                <li>• View your profile and settings</li>
               </ul>
               <Button
                 onClick={() => handleRoleSelection("employee")}
@@ -241,6 +247,60 @@ export default function RoleSelectionPage() {
                   Join as Employee
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Applicant Role Card */}
+          <Card className="group cursor-pointer transition-all duration-300 hover:shadow-lg border border-gray-200 hover:border-gray-400 bg-white rounded-xl">
+            <CardHeader className="text-center pb-4">
+              <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
+                <UserPlus className="w-8 h-8 text-blue-600" />
+              </div>
+              <CardTitle
+                className="text-xl font-semibold"
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  color: "#0E0E0E",
+                }}
+              >
+                I'm an Applicant
+              </CardTitle>
+              <CardDescription
+                className="text-base opacity-80"
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  color: "#0E0E0E",
+                }}
+              >
+                Apply for job opportunities
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <ul
+                className="text-sm opacity-80 mb-6 space-y-2 min-h-[120px]"
+                style={{
+                  color: "#0E0E0E",
+                  fontFamily: "Inter, system-ui, sans-serif",
+                }}
+              >
+                <li>• Submit your resume and application</li>
+                <li>• Apply for open positions</li>
+                <li>• Track your application status</li>
+                <li>• Upload cover letters and documents</li>
+                <li>• Get notified about opportunities</li>
+              </ul>
+              <Button
+                onClick={() => handleRoleSelection("applicant")}
+                disabled={loading}
+                className="group relative w-full bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-300 overflow-hidden"
+                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  Apply for Jobs
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-800 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
               </Button>
             </CardContent>
           </Card>

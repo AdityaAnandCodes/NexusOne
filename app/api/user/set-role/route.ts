@@ -6,7 +6,6 @@ import { EmployeeInvitation } from "@/lib/models/main";
 
 export const runtime = "nodejs";
 
-// Replace your existing POST function logic with this:
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -16,7 +15,32 @@ export async function POST(request: NextRequest) {
 
     const { role } = await request.json();
 
-    console.log(`Setting role to: ${role} for user: ${session.user.email}`);
+    // Validate role - allow frontend role names
+    const validRoles = [
+      "hr",
+      "employee",
+      "applicant",
+      "super_admin",
+      "company_admin",
+      "hr_manager",
+    ];
+    if (!validRoles.includes(role)) {
+      return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+    }
+
+    // Map frontend roles to database roles
+    const roleMapping: { [key: string]: string } = {
+      hr: "hr_manager",
+      employee: "employee",
+      applicant: "applicant",
+      super_admin: "super_admin",
+      company_admin: "company_admin",
+      hr_manager: "hr_manager",
+    };
+
+    const dbRole = roleMapping[role] || role;
+
+    console.log(`Setting role to: ${dbRole} for user: ${session.user.email}`);
 
     const client = new MongoClient(process.env.MONGODB_URI!);
     await client.connect();
@@ -24,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     // Update data object
     const updateData: any = {
-      role: role,
+      role: dbRole,
       updatedAt: new Date(),
     };
 
@@ -70,6 +94,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // For applicants, we don't need company association
+    if (role === "applicant") {
+      console.log(`Setting up applicant role - no company association needed`);
+    }
+
     console.log(`Updating user with data:`, updateData);
 
     const result = await db
@@ -84,7 +113,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: "Role updated successfully",
       hasCompany: hasCompany,
-      role: role,
+      role: dbRole,
     });
   } catch (error) {
     console.error("Error setting user role:", error);

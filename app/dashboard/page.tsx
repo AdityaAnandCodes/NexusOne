@@ -269,6 +269,15 @@ export default function Dashboard() {
         color: "text-slate-700",
       });
     }
+    if (hasHRAccess(userProfile.role)) {
+      actions.push({
+        title: "Review Resumes",
+        description: "View and review applicant resumes",
+        icon: FileText,
+        href: "/hr/resumes",
+        color: "text-slate-700",
+      });
+    }
 
     // Common action for all users
     actions.push({
