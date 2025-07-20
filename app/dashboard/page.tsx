@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import {
   Building2,
   Users,
@@ -24,6 +25,7 @@ import {
   Download,
   Calendar,
   Shield,
+  Upload,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -122,15 +124,38 @@ export default function Dashboard() {
 
   const loadDashboardData = async () => {
     try {
-      // This would fetch from tenant-specific API
-      setStats({
-        totalEmployees: 42,
-        activeOnboarding: 8,
-        completedOnboarding: 34,
-        pendingTasks: 15,
-      });
+      const response = await fetch("/api/dashboard/stats");
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setStats(data.stats);
+        } else {
+          console.error("Failed to fetch dashboard stats:", data.error);
+          // Fallback to default values if API fails
+          setStats({
+            totalEmployees: 0,
+            activeOnboarding: 0,
+            completedOnboarding: 0,
+            pendingTasks: 0,
+          });
+        }
+      } else {
+        console.error("Failed to fetch dashboard stats");
+        setStats({
+          totalEmployees: 0,
+          activeOnboarding: 0,
+          completedOnboarding: 0,
+          pendingTasks: 0,
+        });
+      }
     } catch (error) {
       console.error("Error loading dashboard data:", error);
+      setStats({
+        totalEmployees: 0,
+        activeOnboarding: 0,
+        completedOnboarding: 0,
+        pendingTasks: 0,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -188,7 +213,7 @@ export default function Dashboard() {
   }
 
   // Define quick actions based on user role
-  // Update the getQuickActions function to include Policy Documents for all users
+  // Update the getQuickActions function in your dashboard
   const getQuickActions = () => {
     const actions = [];
 
@@ -225,6 +250,26 @@ export default function Dashboard() {
       color: "text-slate-700",
     });
 
+    // Document Upload - Only for employees
+    if (userProfile.role === "employee") {
+      actions.push({
+        title: "Upload Documents",
+        description: "Submit required onboarding documents",
+        icon: Upload, // Make sure to import Upload from lucide-react
+        href: "/employee/documents",
+        color: "text-slate-700",
+      });
+    }
+    if (hasHRAccess(userProfile.role)) {
+      actions.push({
+        title: "Verify Documents",
+        description: "Review employee document submissions",
+        icon: FileText,
+        href: "/hr/documents",
+        color: "text-slate-700",
+      });
+    }
+
     // Common action for all users
     actions.push({
       title: "Onboarding Chat",
@@ -237,64 +282,7 @@ export default function Dashboard() {
     return actions;
   };
 
-  // Define secondary actions based on user role
-  const getSecondaryActions = () => {
-    const actions = [];
-
-    if (hasHRAccess(userProfile.role)) {
-      actions.push({
-        title: "Setup Onboarding",
-        description: "Configure onboarding flow",
-        icon: Settings,
-        href: "/onboarding/setup",
-        color: "text-slate-700",
-      });
-
-      actions.push({
-        title: "HR Chat",
-        description: "Internal communication",
-        icon: MessageSquare,
-        href: "/chat/admin",
-        color: "text-slate-700",
-      });
-    }
-
-    if (hasAdminAccess(userProfile.role)) {
-      actions.push({
-        title: "Analytics",
-        description: "Performance insights",
-        icon: BarChart3,
-        href: "/analytics",
-        color: "text-slate-700",
-      });
-    }
-
-    return actions;
-  };
-
   const quickActions = getQuickActions();
-  const secondaryActions = getSecondaryActions();
-
-  const recentActivities = [
-    {
-      title: "John Doe started onboarding",
-      time: "2 hours ago",
-      icon: Users,
-      color: "bg-slate-100 text-slate-700",
-    },
-    {
-      title: "Sarah completed document upload",
-      time: "4 hours ago",
-      icon: MessageSquare,
-      color: "bg-gray-100 text-gray-700",
-    },
-    {
-      title: "Onboarding checklist updated",
-      time: "1 day ago",
-      icon: Settings,
-      color: "bg-slate-200 text-slate-800",
-    },
-  ];
 
   const getRoleDisplayName = (role: string) => {
     const roleMap = {
@@ -558,6 +546,7 @@ export default function Dashboard() {
         )}
 
         {/* Quick Actions - Role-based */}
+        {/* Quick Actions - Role-based */}
         {quickActions.length > 0 && (
           <div className="mb-12">
             <h3
@@ -572,27 +561,29 @@ export default function Dashboard() {
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {quickActions.map((action, index) => (
                 <Link key={index} href={action.href}>
-                  <Card className="group bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:border-gray-400 transition-all duration-300 cursor-pointer">
-                    <CardContent className="p-6 text-center">
-                      <action.icon
-                        className={`h-8 w-8 ${action.color} mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}
-                      />
-                      <h3
-                        className="font-semibold text-lg mb-2"
-                        style={{
-                          fontFamily: "Inter, system-ui, sans-serif",
-                          color: "#0E0E0E",
-                        }}
-                      >
-                        {action.title}
-                      </h3>
-                      <p
-                        className="text-gray-600 text-sm mb-3"
-                        style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-                      >
-                        {action.description}
-                      </p>
-                      <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-black group-hover:translate-x-1 transition-all mx-auto" />
+                  <Card className="group bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:border-gray-400 transition-all duration-300 cursor-pointer h-full">
+                    <CardContent className="p-6 text-center h-full flex flex-col justify-between min-h-[200px]">
+                      <div className="flex flex-col items-center">
+                        <action.icon
+                          className={`h-8 w-8 ${action.color} mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}
+                        />
+                        <h3
+                          className="font-semibold text-lg mb-2 line-clamp-2"
+                          style={{
+                            fontFamily: "Inter, system-ui, sans-serif",
+                            color: "#0E0E0E",
+                          }}
+                        >
+                          {action.title}
+                        </h3>
+                        <p
+                          className="text-gray-600 text-sm mb-3 line-clamp-3 flex-grow"
+                          style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                        >
+                          {action.description}
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-black group-hover:translate-x-1 transition-all mx-auto mt-auto" />
                     </CardContent>
                   </Card>
                 </Link>
@@ -716,107 +707,6 @@ export default function Dashboard() {
             )}
           </div>
         )}
-
-        {/* Secondary Actions - Role-based */}
-        {secondaryActions.length > 0 && (
-          <div className="mb-12">
-            <h3
-              className="text-2xl font-bold mb-6"
-              style={{
-                fontFamily: "Inter, system-ui, sans-serif",
-                color: "#0E0E0E",
-              }}
-            >
-              Additional Tools
-            </h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              {secondaryActions.map((action, index) => (
-                <Link key={index} href={action.href}>
-                  <Card className="group bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:border-gray-400 transition-all duration-300 cursor-pointer">
-                    <CardContent className="p-6 text-center">
-                      <action.icon
-                        className={`h-8 w-8 ${action.color} mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}
-                      />
-                      <h3
-                        className="font-semibold text-lg mb-2"
-                        style={{
-                          fontFamily: "Inter, system-ui, sans-serif",
-                          color: "#0E0E0E",
-                        }}
-                      >
-                        {action.title}
-                      </h3>
-                      <p
-                        className="text-gray-600 text-sm mb-3"
-                        style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-                      >
-                        {action.description}
-                      </p>
-                      <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-black group-hover:translate-x-1 transition-all mx-auto" />
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Recent Activity */}
-        <Card className="bg-white border border-gray-200 rounded-xl shadow-lg">
-          <CardHeader>
-            <CardTitle
-              className="text-2xl font-bold"
-              style={{
-                fontFamily: "Inter, system-ui, sans-serif",
-                color: "#0E0E0E",
-              }}
-            >
-              Recent Activity
-            </CardTitle>
-            <CardDescription
-              className="text-gray-600"
-              style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-            >
-              {hasHRAccess(userProfile.role)
-                ? "Latest onboarding updates and employee progress"
-                : "Your recent activity and updates"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-300"
-                >
-                  <div
-                    className={`w-12 h-12 ${activity.color} rounded-xl flex items-center justify-center`}
-                  >
-                    <activity.icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1">
-                    <p
-                      className="font-semibold"
-                      style={{
-                        fontFamily: "Inter, system-ui, sans-serif",
-                        color: "#0E0E0E",
-                      }}
-                    >
-                      {activity.title}
-                    </p>
-                    <p
-                      className="text-gray-600 text-sm"
-                      style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-                    >
-                      {activity.time}
-                    </p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </main>
     </div>
   );
