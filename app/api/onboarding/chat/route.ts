@@ -14,6 +14,7 @@ interface PolicyDocument {
     category?: string;
   };
 }
+
 interface CustomPolicy {
   fileId: any;
   [key: string]: any;
@@ -26,6 +27,420 @@ interface PolicyIds {
   privacyPolicyFileId?: any;
   safePolicyFileId?: any;
   customPolicies?: CustomPolicy[];
+}
+
+// Add integration detection function
+function detectIntegrationIntent(message: string): {
+  type: "github" | "jira" | "notion" | null;
+  action: string;
+  entities: any;
+} {
+  const messageLower = message.toLowerCase();
+
+  // GitHub patterns
+  if (
+    messageLower.includes("github") ||
+    messageLower.includes("repository") ||
+    messageLower.includes("repo") ||
+    messageLower.includes("git")
+  ) {
+    if (
+      messageLower.includes("issue") ||
+      messageLower.includes("bug") ||
+      messageLower.includes("problem")
+    ) {
+      return {
+        type: "github",
+        action: "issues",
+        entities: { query: message },
+      };
+    }
+    if (messageLower.includes("repository") || messageLower.includes("repos")) {
+      return {
+        type: "github",
+        action: "repositories",
+        entities: { query: message },
+      };
+    }
+  }
+
+  // Jira patterns
+  if (
+    messageLower.includes("jira") ||
+    messageLower.includes("ticket") ||
+    messageLower.includes("task") ||
+    messageLower.includes("project")
+  ) {
+    if (messageLower.includes("create") || messageLower.includes("new")) {
+      return {
+        type: "jira",
+        action: "create-issue",
+        entities: extractJiraIssueData(message),
+      };
+    }
+    if (messageLower.includes("assign") || messageLower.includes("user")) {
+      return {
+        type: "jira",
+        action: "assign-user",
+        entities: { query: message },
+      };
+    }
+    if (messageLower.includes("projects")) {
+      return {
+        type: "jira",
+        action: "projects",
+        entities: { query: message },
+      };
+    }
+  }
+
+  // Notion patterns
+  if (
+    messageLower.includes("notion") ||
+    messageLower.includes("page") ||
+    messageLower.includes("document") ||
+    messageLower.includes("notes")
+  ) {
+    if (messageLower.includes("create") || messageLower.includes("new")) {
+      return {
+        type: "notion",
+        action: "create-page",
+        entities: extractNotionPageData(message),
+      };
+    }
+    return {
+      type: "notion",
+      action: "list-pages",
+      entities: { query: message },
+    };
+  }
+
+  return { type: null, action: "", entities: {} };
+}
+
+// Add helper functions
+function extractJiraIssueData(message: string) {
+  // Simple extraction - can be enhanced with NLP
+  const summaryMatch = message.match(/summary[:\s]+([^,\n]+)/i);
+  const descriptionMatch = message.match(/description[:\s]+([^,\n]+)/i);
+
+  return {
+    summary: summaryMatch ? summaryMatch[1].trim() : "",
+    description: descriptionMatch ? descriptionMatch[1].trim() : message,
+    query: message,
+  };
+}
+
+function extractNotionPageData(message: string) {
+  const titleMatch =
+    message.match(/title[:\s]+([^,\n]+)/i) ||
+    message.match(/page[:\s]+([^,\n]+)/i);
+
+  return {
+    title: titleMatch ? titleMatch[1].trim() : "New Page",
+    content: message,
+    query: message,
+  };
+}
+
+// Updated integration handler function with proper authentication
+async function handleIntegrationRequest(
+  intent: any,
+  session: any,
+  request: NextRequest
+): Promise<string> {
+  const baseUrl = request.nextUrl.origin;
+
+  switch (intent.type) {
+    case "github":
+      return await handleGitHubRequest(intent, baseUrl, session, request);
+    case "jira":
+      return await handleJiraRequest(intent, baseUrl, session, request);
+    case "notion":
+      return await handleNotionRequest(intent, baseUrl, session, request);
+    default:
+      return "Integration not supported";
+  }
+}
+
+async function handleGitHubRequest(
+  intent: any,
+  baseUrl: string,
+  session: any,
+  request: NextRequest
+): Promise<string> {
+  try {
+    console.log(`🎯 GitHub request details:`, {
+      baseUrl,
+      action: intent.action,
+      userEmail: session.user?.email,
+      entities: intent.entities,
+    });
+
+    const headers = {
+      "Content-Type": "application/json",
+      Cookie: request.headers.get("cookie") || "",
+      // Add authorization if needed
+      ...(session.accessToken && {
+        Authorization: `Bearer ${session.accessToken}`,
+      }),
+    };
+
+    switch (intent.action) {
+      case "issues":
+        const issuesResponse = await fetch(
+          `${baseUrl}/api/integrations/github/issues`,
+          { headers }
+        );
+
+        console.log(
+          `📊 GitHub Issues API Response Status: ${issuesResponse.status}`
+        );
+
+        if (!issuesResponse.ok) {
+          const errorText = await issuesResponse.text();
+          console.log(`❌ GitHub Issues API Error Response:`, errorText);
+          throw new Error(
+            `GitHub API error: ${issuesResponse.status} - ${errorText}`
+          );
+        }
+
+        const issues = await issuesResponse.json();
+        return `✅ Found ${issues.length || 0} GitHub issues: ${JSON.stringify(
+          issues.slice(0, 3)
+        )}`;
+
+      case "repositories":
+        const reposResponse = await fetch(
+          `${baseUrl}/api/integrations/repositories/`,
+          { headers }
+        );
+
+        console.log(
+          `📊 GitHub Repos API Response Status: ${reposResponse.status}`
+        );
+
+        if (!reposResponse.ok) {
+          const errorText = await reposResponse.text();
+          console.log(`❌ GitHub Repos API Error Response:`, errorText);
+          throw new Error(
+            `GitHub Repos API error: ${reposResponse.status} - ${errorText}`
+          );
+        }
+
+        const repos = await reposResponse.json();
+        return `✅ Connected repositories: ${JSON.stringify(repos)}`;
+
+      default:
+        return "❓ GitHub action not recognized";
+    }
+  } catch (error) {
+    console.error("🚨 GitHub integration error:", error);
+    return `❌ GitHub integration failed: Please check if GitHub is properly connected and you have the necessary permissions. Error: ${error}`;
+  }
+}
+
+async function handleJiraRequest(
+  intent: any,
+  baseUrl: string,
+  session: any,
+  request: NextRequest
+): Promise<string> {
+  try {
+    console.log(`🎯 Jira request details:`, {
+      baseUrl,
+      action: intent.action,
+      userEmail: session.user?.email,
+      entities: intent.entities,
+    });
+
+    const headers = {
+      "Content-Type": "application/json",
+      Cookie: request.headers.get("cookie") || "",
+      // Add authorization if needed
+      ...(session.accessToken && {
+        Authorization: `Bearer ${session.accessToken}`,
+      }),
+    };
+
+    switch (intent.action) {
+      case "create-issue":
+        const createResponse = await fetch(
+          `${baseUrl}/api/integrations/jira/create-issue`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              summary: intent.entities.summary || "New Issue",
+              description: intent.entities.description || intent.entities.query,
+            }),
+          }
+        );
+
+        console.log(
+          `📊 Jira Create Issue API Response Status: ${createResponse.status}`
+        );
+
+        if (!createResponse.ok) {
+          const errorText = await createResponse.text();
+          console.log(`❌ Jira Create Issue API Error Response:`, errorText);
+
+          // Provide more helpful error messages based on status
+          if (createResponse.status === 401) {
+            return `❌ Jira authentication failed. Please reconnect your Jira account in the integrations settings.`;
+          } else if (createResponse.status === 403) {
+            return `❌ You don't have permission to create issues in Jira. Please check your Jira permissions.`;
+          } else if (createResponse.status === 404) {
+            return `❌ Jira project not found. Please verify the project exists and you have access to it.`;
+          }
+
+          throw new Error(
+            `Jira create issue API error: ${createResponse.status} - ${errorText}`
+          );
+        }
+
+        const newIssue = await createResponse.json();
+        return `✅ Created Jira issue successfully: ${JSON.stringify(
+          newIssue
+        )}`;
+
+      case "projects":
+        const projectsResponse = await fetch(
+          `${baseUrl}/api/integrations/jira/projects`,
+          { headers }
+        );
+
+        console.log(
+          `📊 Jira Projects API Response Status: ${projectsResponse.status}`
+        );
+
+        if (!projectsResponse.ok) {
+          const errorText = await projectsResponse.text();
+          console.log(`❌ Jira Projects API Error Response:`, errorText);
+
+          if (projectsResponse.status === 401) {
+            return `❌ Jira authentication failed. Please reconnect your Jira account.`;
+          }
+
+          throw new Error(
+            `Jira projects API error: ${projectsResponse.status} - ${errorText}`
+          );
+        }
+
+        const projects = await projectsResponse.json();
+        return `✅ Available Jira projects: ${JSON.stringify(projects)}`;
+
+      case "assign-user":
+        return "📝 To assign a user, please provide the issue ID and user account ID";
+
+      default:
+        return "❓ Jira action not recognized";
+    }
+  } catch (error) {
+    console.error("🚨 Jira integration error:", error);
+    return `❌ Jira integration failed: Please check if Jira is properly connected and you have permission to create issues. Error: ${error}`;
+  }
+}
+
+async function handleNotionRequest(
+  intent: any,
+  baseUrl: string,
+  session: any,
+  request: NextRequest
+): Promise<string> {
+  try {
+    console.log(`🎯 Notion request details:`, {
+      baseUrl,
+      action: intent.action,
+      userEmail: session.user?.email,
+      entities: intent.entities,
+    });
+
+    const headers = {
+      "Content-Type": "application/json",
+      Cookie: request.headers.get("cookie") || "",
+      // Add authorization if needed
+      ...(session.accessToken && {
+        Authorization: `Bearer ${session.accessToken}`,
+      }),
+    };
+
+    switch (intent.action) {
+      case "create-page":
+        const createResponse = await fetch(
+          `${baseUrl}/api/integrations/notion/pages`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              title: intent.entities.title,
+              content: intent.entities.content,
+            }),
+          }
+        );
+
+        console.log(
+          `📊 Notion Create Page API Response Status: ${createResponse.status}`
+        );
+
+        if (!createResponse.ok) {
+          const errorText = await createResponse.text();
+          console.log(`❌ Notion Create Page API Error Response:`, errorText);
+
+          // Provide more helpful error messages based on status
+          if (createResponse.status === 401) {
+            return `❌ Notion authentication failed. Please reconnect your Notion account in the integrations settings.`;
+          } else if (createResponse.status === 403) {
+            return `❌ You don't have permission to create pages in Notion. Please check your Notion permissions.`;
+          } else if (createResponse.status === 404) {
+            return `❌ Notion database or workspace not found. Please verify your Notion setup.`;
+          }
+
+          throw new Error(
+            `Notion create page API error: ${createResponse.status} - ${errorText}`
+          );
+        }
+
+        const newPage = await createResponse.json();
+        return `✅ Created Notion page successfully: ${JSON.stringify(
+          newPage
+        )}`;
+
+      case "list-pages":
+        const pagesResponse = await fetch(
+          `${baseUrl}/api/integrations/notion/pages/`,
+          { headers }
+        );
+
+        console.log(
+          `📊 Notion List Pages API Response Status: ${pagesResponse.status}`
+        );
+
+        if (!pagesResponse.ok) {
+          const errorText = await pagesResponse.text();
+          console.log(`❌ Notion List Pages API Error Response:`, errorText);
+
+          if (pagesResponse.status === 401) {
+            return `❌ Notion authentication failed. Please reconnect your Notion account.`;
+          }
+
+          throw new Error(
+            `Notion pages API error: ${pagesResponse.status} - ${errorText}`
+          );
+        }
+
+        const pages = await pagesResponse.json();
+        return `✅ Available Notion pages: ${JSON.stringify(
+          pages.slice(0, 5)
+        )}`;
+
+      default:
+        return "❓ Notion action not recognized";
+    }
+  } catch (error) {
+    console.error("🚨 Notion integration error:", error);
+    return `❌ Notion integration failed: Please check if Notion is properly connected and you have the necessary permissions. Error: ${error}`;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -64,7 +479,6 @@ export async function POST(request: NextRequest) {
 
     console.log(`🔍 Debug Information:`);
     console.log(`- User Company ID: ${user.companyId}`);
-
     console.log(`- Message: "${message}"`);
 
     // Get company information with policies
@@ -83,6 +497,34 @@ export async function POST(request: NextRequest) {
     console.log(`🏢 Processing chat for company: ${company.name}`);
     console.log(`👤 User: ${user.name} (${user.email})`);
     console.log(`💬 Message: ${message.substring(0, 100)}...`);
+
+    // Add integration detection
+    const integrationIntent = detectIntegrationIntent(message);
+
+    let integrationContext = "";
+    let integrationResponse = "";
+
+    // Handle integration requests with enhanced error handling
+    if (integrationIntent.type) {
+      try {
+        console.log(`🔗 Processing integration request:`, integrationIntent);
+        integrationResponse = await handleIntegrationRequest(
+          integrationIntent,
+          session,
+          request // Pass the full request object
+        );
+        integrationContext = `Integration Data: ${integrationResponse}`;
+        console.log(
+          `✅ Integration response:`,
+          integrationResponse.substring(0, 200) + "..."
+        );
+      } catch (error) {
+        console.error("🚨 Integration error:", error);
+        integrationContext = `Integration Error: ${error}`;
+        // Provide user-friendly error message
+        integrationResponse = `❌ Integration request failed. Please check if the service is properly connected in your integration settings. ${error}`;
+      }
+    }
 
     // Connect to MongoDB for file operations
     const client = new MongoClient(process.env.MONGODB_URI!);
@@ -108,8 +550,6 @@ export async function POST(request: NextRequest) {
     }
 
     companyContext += `Industry: ${company.industry || "Not specified"}\n`;
-    // Replace the policy file retrieval section in your chat API route
-    // Around line 70-90 in your current code
 
     if (isPolicyQuery) {
       console.log("📋 Detected policy query, retrieving company documents...");
@@ -228,6 +668,8 @@ export async function POST(request: NextRequest) {
           message,
           policyContext,
           companyContext,
+          integrationContext,
+          integrationIntent,
           sessionId,
           userId: session.user?.email,
           userName: user.name,
@@ -254,6 +696,13 @@ export async function POST(request: NextRequest) {
       response: result.response,
       sessionId: result.sessionId || sessionId || generateSessionId(),
       onboardingStatus,
+      integrationData: integrationIntent.type
+        ? {
+            type: integrationIntent.type,
+            action: integrationIntent.action,
+            response: integrationResponse,
+          }
+        : undefined,
       debugInfo:
         process.env.NODE_ENV === "development"
           ? {
@@ -261,11 +710,14 @@ export async function POST(request: NextRequest) {
               policyContextLength: policyContext.length,
               foundPolicyFiles: policyContext ? true : false,
               userRole: user.role,
+              integrationIntent: integrationIntent.type
+                ? integrationIntent
+                : undefined,
             }
           : undefined,
     });
   } catch (error) {
-    console.error("Chat API error:", error);
+    console.error("🚨 Chat API error:", error);
     return NextResponse.json(
       { error: "Failed to process message" },
       { status: 500 }
@@ -338,6 +790,7 @@ async function fallbackPDFExtraction(
     return `[Error reading ${filename}: ${error}]`;
   }
 }
+
 // Enhanced helper function to determine if a policy should be included
 function shouldIncludePolicy(message: string, filename: string): boolean {
   const messageLower = message.toLowerCase();
@@ -406,6 +859,7 @@ function shouldIncludePolicy(message: string, filename: string): boolean {
   // Default to include if we're not sure
   return true;
 }
+
 // Helper function to check if FAQ should be included
 function shouldIncludeFAQ(message: string, question: string): boolean {
   const messageLower = message.toLowerCase();
@@ -570,6 +1024,7 @@ async function validateGridFSFile(
     return { valid: false };
   }
 }
+
 // Enhanced helper function to get onboarding status
 async function getOnboardingStatus(userId: string, companyId: string) {
   try {

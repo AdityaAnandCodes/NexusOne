@@ -1,6 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  ChevronRight,
+  CheckCircle,
+  Zap,
+  Shield,
+  Users,
+  Clock,
+} from "lucide-react";
 
 interface UserInfo {
   id: string;
@@ -55,6 +63,7 @@ interface JiraAuthStatus {
 }
 
 export default function Settings() {
+  const [isVisible, setIsVisible] = useState(false);
   const [notionAuth, setNotionAuth] = useState<boolean>(false);
   const [githubAuth, setGithubAuth] = useState<boolean>(false);
   const [notionUser, setNotionUser] = useState<UserInfo | null>(null);
@@ -72,7 +81,8 @@ export default function Settings() {
       name: "Notion",
       connected: notionAuth,
       icon: "📝",
-      description: "Access your Notion workspace, pages, and databases",
+      description:
+        "Access your Notion workspace, pages, and databases for seamless content management",
       permissions: [
         "Read and write access to pages",
         "Access to databases and content",
@@ -85,7 +95,8 @@ export default function Settings() {
       name: "GitHub",
       connected: githubAuth,
       icon: "🐙",
-      description: "Access your GitHub repositories, issues, and user data",
+      description:
+        "Connect with your GitHub repositories, issues, and development workflow",
       permissions: [
         "Read access to repositories",
         "Fetch issues from repositories",
@@ -98,7 +109,8 @@ export default function Settings() {
       name: "Slack",
       connected: false,
       icon: "💬",
-      description: "Connect with your Slack workspace and channels",
+      description:
+        "Integrate with your Slack workspace for enhanced team communication",
       permissions: [
         "Send and read messages",
         "Access channel information",
@@ -111,7 +123,8 @@ export default function Settings() {
       name: "Jira",
       connected: jiraAuth,
       icon: "📋",
-      description: "Manage your Jira projects, issues, and workflows",
+      description:
+        "Streamline project management with Jira integration and workflow automation",
       permissions: [
         "Read and create issues",
         "Access project information",
@@ -123,6 +136,7 @@ export default function Settings() {
   ];
 
   useEffect(() => {
+    setIsVisible(true);
     checkAllAuthStatus();
   }, []);
 
@@ -281,28 +295,26 @@ export default function Settings() {
     }
   };
 
-  const getButtonColor = (color: string) => {
-    const colors: { [key: string]: string } = {
-      blue: "bg-blue-600 hover:bg-blue-700",
-      gray: "bg-gray-800 hover:bg-gray-900",
-      green: "bg-green-600 hover:bg-green-700",
-      indigo: "bg-indigo-600 hover:bg-indigo-700",
-    };
-    return colors[color] || "bg-gray-600 hover:bg-gray-700";
-  };
-
   const getConnectedInfo = (integration: Integration) => {
     if (integration.name === "Notion" && notionUser) {
       return (
-        <div className="bg-green-50 p-4 rounded-lg text-left mb-4">
-          <p className="text-sm">
-            <span className="font-semibold">User:</span> {notionUser.name}
-          </p>
-          <p className="text-sm">
-            <span className="font-semibold">Email:</span> {notionUser.email}
-          </p>
-          <p className="text-sm">
-            <span className="font-semibold">Workspace:</span> {workspaceName}
+        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-left mb-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
+              <span className="text-white text-sm font-bold">N</span>
+            </div>
+            <div>
+              <p
+                className="font-semibold text-gray-900"
+                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+              >
+                {notionUser.name}
+              </p>
+              <p className="text-sm text-gray-600">{notionUser.email}</p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-700">
+            <span className="font-medium">Workspace:</span> {workspaceName}
           </p>
         </div>
       );
@@ -310,22 +322,25 @@ export default function Settings() {
 
     if (integration.name === "GitHub" && githubUser) {
       return (
-        <div className="bg-green-50 p-4 rounded-lg text-left mb-4">
-          <div className="flex items-center gap-3 mb-2">
+        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-left mb-6">
+          <div className="flex items-center gap-3 mb-3">
             <img
               src={githubUser.avatar_url}
               alt={githubUser.login}
               className="w-8 h-8 rounded-full"
             />
             <div>
-              <p className="text-sm font-semibold">
+              <p
+                className="font-semibold text-gray-900"
+                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+              >
                 {githubUser.name || githubUser.login}
               </p>
-              <p className="text-xs text-gray-600">@{githubUser.login}</p>
+              <p className="text-sm text-gray-600">@{githubUser.login}</p>
             </div>
           </div>
-          <p className="text-sm">
-            <span className="font-semibold">Email:</span>{" "}
+          <p className="text-sm text-gray-700">
+            <span className="font-medium">Email:</span>{" "}
             {githubUser.email || "Not public"}
           </p>
         </div>
@@ -334,23 +349,28 @@ export default function Settings() {
 
     if (integration.name === "Jira" && jiraUser) {
       return (
-        <div className="bg-green-50 p-4 rounded-lg text-left mb-4">
-          <div className="flex items-center gap-3 mb-2">
+        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-left mb-6">
+          <div className="flex items-center gap-3 mb-3">
             <img
               src={jiraUser.picture}
               alt={jiraUser.name}
               className="w-8 h-8 rounded-full"
             />
             <div>
-              <p className="text-sm font-semibold">{jiraUser.name}</p>
-              <p className="text-xs text-gray-600">{jiraUser.email}</p>
+              <p
+                className="font-semibold text-gray-900"
+                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+              >
+                {jiraUser.name}
+              </p>
+              <p className="text-sm text-gray-600">{jiraUser.email}</p>
             </div>
           </div>
           {jiraSites.length > 0 && (
-            <div className="mt-2">
-              <p className="text-xs font-semibold">Sites:</p>
+            <div className="mt-3">
+              <p className="text-sm font-medium text-gray-700 mb-1">Sites:</p>
               {jiraSites.map((site) => (
-                <p key={site.id} className="text-xs text-gray-600">
+                <p key={site.id} className="text-sm text-gray-600">
                   {site.name}
                 </p>
               ))}
@@ -363,78 +383,187 @@ export default function Settings() {
     return null;
   };
 
+  const stats = [
+    { value: "4+", label: "Integrations", icon: Zap },
+    { value: "Enterprise", label: "Security", icon: Shield },
+    { value: "24/7", label: "Support", icon: Clock },
+  ];
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 p-8 font-sans">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-white mb-4">
-            App Integrations
-          </h1>
-          <p className="text-xl text-white/80">
-            Connect your favorite tools and streamline your workflow
-          </p>
-        </div>
+    <section className="min-h-screen bg-white">
+      {/* Header Section */}
+      <div className="relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          <div
+            className={`text-center transform transition-all duration-1000 ${
+              isVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-10 opacity-0"
+            }`}
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full border border-gray-200 mb-8">
+              <div className="w-2 h-2 bg-gray-900 rounded-full animate-pulse"></div>
+              <span
+                className="text-sm font-semibold tracking-wide"
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  color: "#0E0E0E",
+                }}
+              >
+                NEXUS INTEGRATIONS
+              </span>
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {integrations.map((integration) => (
-            <div
-              key={integration.name}
-              className="bg-white rounded-xl shadow-2xl p-8 transition-all duration-300 hover:scale-105"
+            <h1
+              className="text-6xl font-black tracking-tight mb-6"
+              style={{
+                fontFamily: "Inter, system-ui, sans-serif",
+                color: "#0E0E0E",
+              }}
             >
-              <div className="text-center mb-6">
-                <div className="text-6xl mb-4">{integration.icon}</div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  {integration.name}
-                </h2>
-                <p className="text-gray-600 mb-4">{integration.description}</p>
+              Connect Your
+              <br />
+              <span className="text-gray-800">Workspace</span>
+            </h1>
 
-                {integration.connected && (
-                  <div className="mb-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                      ✓ Connected
+            <p
+              className="text-xl leading-relaxed opacity-80 max-w-3xl mx-auto mb-12"
+              style={{
+                fontFamily: "Inter, system-ui, sans-serif",
+                color: "#0E0E0E",
+              }}
+            >
+              Streamline your workflow by connecting Nexus with your favorite
+              tools. Set up integrations in seconds and unlock the full
+              potential of your workspace.
+            </p>
+
+            {/* Stats */}
+            <div className="flex justify-center gap-8 mb-16">
+              {stats.map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <stat.icon className="w-5 h-5 text-gray-700" />
+                    <span
+                      className="text-2xl font-bold"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      {stat.value}
                     </span>
                   </div>
-                )}
+                  <p
+                    className="text-sm text-gray-600"
+                    style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                  >
+                    {stat.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Integrations Grid */}
+      <div className="max-w-6xl mx-auto px-6 pb-20">
+        <div
+          className={`grid grid-cols-1 md:grid-cols-2 gap-8 transform transition-all duration-1000 delay-300 ${
+            isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+          }`}
+        >
+          {integrations.map((integration, index) => (
+            <div
+              key={integration.name}
+              className="group bg-white rounded-2xl border border-gray-200 p-8 hover:border-gray-300 hover:shadow-xl transition-all duration-300"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="text-4xl">{integration.icon}</div>
+                  <div>
+                    <h3
+                      className="text-2xl font-bold text-gray-900"
+                      style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                    >
+                      {integration.name}
+                    </h3>
+                    {integration.connected && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span
+                          className="text-sm font-medium text-green-600"
+                          style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                        >
+                          Connected
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all" />
               </div>
 
+              {/* Description */}
+              <p
+                className="text-gray-600 mb-6 leading-relaxed"
+                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+              >
+                {integration.description}
+              </p>
+
+              {/* Connected User Info */}
               {integration.connected && getConnectedInfo(integration)}
 
-              <div className="bg-gray-50 p-4 rounded-lg mb-6 text-left">
-                <h3 className="text-sm font-semibold mb-3 text-gray-800">
-                  Permissions:
-                </h3>
-                <ul className="space-y-1 text-sm text-gray-700">
-                  {integration.permissions.map((permission, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="text-blue-500 mr-2 mt-0.5">•</span>
-                      {permission}
+              {/* Permissions */}
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-8">
+                <h4
+                  className="text-sm font-semibold mb-3 text-gray-900"
+                  style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                >
+                  Permissions Required:
+                </h4>
+                <ul className="space-y-2">
+                  {integration.permissions.map((permission, permIndex) => (
+                    <li key={permIndex} className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                      <span
+                        className="text-sm text-gray-700"
+                        style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                      >
+                        {permission}
+                      </span>
                     </li>
                   ))}
                 </ul>
               </div>
 
+              {/* Action Button */}
               {!integration.connected ? (
                 <button
                   onClick={() => handleConnect(integration.name)}
                   disabled={loading[integration.name.toLowerCase()]}
-                  className={`w-full px-6 py-3 text-white font-semibold rounded-lg transition-all duration-300 ${getButtonColor(
-                    integration.color
-                  )} ${
-                    loading[integration.name.toLowerCase()]
-                      ? "opacity-50 cursor-not-allowed"
-                      : "transform hover:scale-105"
-                  } shadow-lg`}
+                  className="group w-full px-6 py-4 bg-black text-white font-semibold rounded-xl hover:bg-gray-900 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ fontFamily: "Inter, system-ui, sans-serif" }}
                 >
-                  {loading[integration.name.toLowerCase()]
-                    ? "Connecting..."
-                    : `Connect ${integration.name}`}
+                  <span className="flex items-center justify-center gap-2">
+                    {loading[integration.name.toLowerCase()]
+                      ? "Connecting..."
+                      : `Connect ${integration.name}`}
+                    {!loading[integration.name.toLowerCase()] && (
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    )}
+                  </span>
                 </button>
               ) : (
                 <button
                   onClick={() =>
                     handleDisconnect(integration.name.toLowerCase())
                   }
-                  className="w-full px-6 py-3 text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
+                  className="group w-full px-6 py-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-red-300 hover:text-red-600 hover:bg-red-50 transition-all duration-300"
+                  style={{ fontFamily: "Inter, system-ui, sans-serif" }}
                 >
                   Disconnect
                 </button>
@@ -442,7 +571,33 @@ export default function Settings() {
             </div>
           ))}
         </div>
+
+        {/* Trust Indicators */}
+        <div
+          className={`flex items-center justify-center gap-8 mt-16 pt-8 border-t border-gray-200 transform transition-all duration-1000 delay-700 ${
+            isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+          }`}
+        >
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <CheckCircle className="w-4 h-4 text-gray-700" />
+            <span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+              Enterprise Ready
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <CheckCircle className="w-4 h-4 text-gray-700" />
+            <span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+              SOC 2 Compliant
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <CheckCircle className="w-4 h-4 text-gray-700" />
+            <span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+              GDPR Ready
+            </span>
+          </div>
+        </div>
       </div>
-    </main>
+    </section>
   );
 }
