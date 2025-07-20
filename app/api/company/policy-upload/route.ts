@@ -65,41 +65,90 @@ export async function POST(request: NextRequest) {
 
     let extractResponse;
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       extractResponse = await fetch("http://localhost:5000/api/extract-text", {
         method: "POST",
         body: serverFormData,
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
       console.log("📡 Express server response status:", extractResponse.status);
     } catch (fetchError) {
       console.error("❌ Failed to connect to Express server:", fetchError);
+
+      if (
+        typeof fetchError === "object" &&
+        fetchError !== null &&
+        "name" in fetchError &&
+        (fetchError as { name?: unknown }).name === "AbortError"
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Text extraction timed out. Please try with a smaller file or contact support.",
+          },
+          { status: 408 }
+        );
+      }
+
       return NextResponse.json(
         {
           error:
-            "Failed to connect to text extraction service. Make sure Express server is running on port 5000.",
+            "Failed to connect to text extraction service. Please ensure the extraction service is running.",
         },
-        { status: 500 }
+        { status: 503 }
       );
     }
 
     if (!extractResponse.ok) {
-      const errorText = await extractResponse.text();
-      console.error("❌ Express server error response:", errorText);
+      let errorData;
+      try {
+        errorData = await extractResponse.json();
+      } catch (jsonError) {
+        errorData = { error: await extractResponse.text() };
+      }
+
+      console.error("❌ Express server error response:", errorData);
+
+      // Return user-friendly error messages
+      const userMessage = errorData.error || "Text extraction failed";
+
       return NextResponse.json(
-        { error: `Text extraction service error: ${errorText}` },
+        {
+          error: userMessage,
+          details: errorData.details,
+        },
         { status: extractResponse.status }
       );
     }
 
-    const extractResult = await extractResponse.json();
+    let extractResult;
+    try {
+      extractResult = await extractResponse.json();
+    } catch (jsonError) {
+      console.error("❌ Failed to parse extraction response:", jsonError);
+      return NextResponse.json(
+        { error: "Invalid response from text extraction service" },
+        { status: 502 }
+      );
+    }
+
     console.log("📝 Text extraction result:", {
       success: extractResult.success,
       textLength: extractResult.extractedText?.length || 0,
+      warnings: extractResult.metadata?.warnings || [],
       error: extractResult.error,
     });
 
     if (!extractResult.success) {
       return NextResponse.json(
-        { error: `Text extraction failed: ${extractResult.error}` },
+        {
+          error: extractResult.error || "Text extraction failed",
+          details: extractResult.message,
+        },
         { status: 400 }
       );
     }
@@ -108,6 +157,11 @@ export async function POST(request: NextRequest) {
     console.log(
       `✅ Successfully extracted ${extractedText.length} characters from ${file.name}`
     );
+
+    // Log any warnings
+    if (extractResult.metadata?.warnings?.length > 0) {
+      console.warn("⚠️ Extraction warnings:", extractResult.metadata.warnings);
+    }
 
     // Connect to MongoDB for GridFS
     console.log("🗄️ Connecting to MongoDB for GridFS...");

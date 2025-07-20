@@ -14,15 +14,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+
 export default function SignIn() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Check if user is already signed in
     getSession().then(async (session) => {
       if (session?.user?.email) {
-        // Check if user already has a company
         try {
           const response = await fetch("/api/user/company-status");
           if (response.ok) {
@@ -57,34 +56,36 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center space-x-2">
-            <Building2 className="h-10 w-10 text-white" />
-            <span className="text-3xl font-bold text-white">NexusOne</span>
-          </Link>
+    <section className="relative flex items-center justify-center min-h-screen px-8 py-0.5 overflow-hidden bg-gradient-to-br from-gray-100 via-white to-gray-200">
+      <div className="flex-1 space-y-10 relative z-10 max-w-xl mx-auto">
+        {/* Main Heading */}
+        <div className="space-y-8 transform transition-all duration-1000 translate-y-0 opacity-100">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full border border-gray-200 mx-auto">
+            <div className="w-2 h-2 bg-gray-900 rounded-full animate-pulse"></div>
+            <span className="text-sm font-semibold tracking-wide" style={{ fontFamily: "Inter, system-ui, sans-serif", color: "#0E0E0E" }}>
+              NEXUS - ALL IN ONE AGENT
+            </span>
+          </div>
+
+          <h1 className="text-5xl md:text-6xl font-black tracking-tight text-center" style={{ fontFamily: "Inter, system-ui, sans-serif", color: "#0E0E0E" }}>
+            Welcome Back<br />
+            <span className="text-gray-800">Sign in to your workspace</span>
+          </h1>
+
+          <p className="text-lg leading-relaxed opacity-80 max-w-2xl mx-auto text-center" style={{ fontFamily: "Inter, system-ui, sans-serif", color: "#0E0E0E" }}>
+            Nexus One is an intelligent AI agent that revolutionizes company onboarding and streamlines your workflow through seamless integrations with Mail, GitHub, Notion, Jira, and other WorkOS applications.
+          </p>
         </div>
 
-        {/* Sign In Card */}
-        <Card className="bg-white/10 backdrop-blur-md border-white/20">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-white">
-              Welcome Back
-            </CardTitle>
-            <CardDescription className="text-white/70">
-              Sign in to your account to continue
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <Button
-              onClick={handleGoogleSignIn}
-              disabled={isLoading}
-              variant="outline"
-              className="w-full bg-white text-slate-900 hover:bg-gray-100 border-white/20"
-              size="lg"
-            >
+        {/* Sign In Button */}
+        <div className="flex flex-col gap-4 pt-4">
+          <button
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
+            className="group relative px-8 py-4 bg-black text-white font-semibold rounded-xl hover:bg-gray-900 transition-all duration-300 overflow-hidden w-full flex items-center justify-center"
+            style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+          >
+            <span className="relative z-10 flex items-center gap-2">
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
@@ -104,36 +105,50 @@ export default function SignIn() {
                 />
               </svg>
               {isLoading ? "Signing in..." : "Continue with Google"}
-            </Button>
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-900 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+          </button>
 
-            <div className="text-center">
-              <p className="text-sm text-white/60">
-                Don't have an account?{" "}
-                <Link
-                  href="/onboarding/company"
-                  className="text-blue-400 hover:text-blue-300 underline"
-                >
-                  Create one for your company
-                </Link>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Don't have an account?{" "}
+              <Link href="/onboarding/company" className="text-blue-400 hover:text-blue-300 underline">
+                Create one for your company
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        {/* Trust Indicators */}
+        <div className="flex items-center gap-6 pt-4 justify-center">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4" /></svg>
+            <span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>Enterprise Ready</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4" /></svg>
+            <span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>SOC 2 Compliant</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4" /></svg>
+            <span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>GDPR Ready</span>
+          </div>
+        </div>
 
         {/* Footer */}
         <div className="text-center mt-8">
-          <p className="text-white/50 text-sm">
+          <p className="text-gray-500 text-sm">
             By signing in, you agree to our{" "}
-            <Link href="/terms" className="underline hover:text-white/70">
+            <Link href="/terms" className="underline hover:text-gray-700">
               Terms of Service
             </Link>{" "}
             and{" "}
-            <Link href="/privacy" className="underline hover:text-white/70">
+            <Link href="/privacy" className="underline hover:text-gray-700">
               Privacy Policy
             </Link>
           </p>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

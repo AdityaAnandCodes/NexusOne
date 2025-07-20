@@ -53,6 +53,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate the role if provided, otherwise default to 'employee'
+    const allowedRoles = ["employee", "manager", "team_lead", "hr_manager"]; // Add your allowed roles here
+    const employeeRole =
+      role && allowedRoles.includes(role) ? role : "employee";
+
     await connectToMainDB();
 
     // Check if invitation already exists for this email and company
@@ -111,7 +116,7 @@ export async function POST(request: NextRequest) {
               .filter((s) => s.length > 0)
           : skills,
       companyId: user.companyId,
-      role: role || "employee",
+      role: employeeRole, // Use the validated employee role, not the HR user's role
       department: department,
       position: position,
       invitedBy: user._id,
@@ -126,9 +131,7 @@ export async function POST(request: NextRequest) {
 
     // Send invitation email with credentials
     try {
-      const invitationUrl = `${
-        process.env.APP_URL || "http://localhost:3000"
-      }/onboarding/invitation?invitation=${invitation._id}`;
+      const invitationUrl = `${process.env.FRONTEND_URL}/auth/signin?invitation=${invitation._id}`;
 
       await sendEmployeeInvitationEmail({
         recipientEmail: email,
@@ -136,7 +139,7 @@ export async function POST(request: NextRequest) {
         companyName: company?.name || "Your New Company",
         inviterName: user.name || user.email || "HR Team",
         inviterEmail: user.email,
-        role: role || "employee",
+        role: employeeRole, // Use the employee's role, not the HR user's role
         department: department,
         position: position,
         invitationUrl: invitationUrl,

@@ -1,40 +1,32 @@
+// Create: /app/api/user/check-and-accept-invitation/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { connectToMainDB } from "@/lib/mongodb";
 import { EmployeeInvitation } from "@/lib/models/main";
-import { MongoClient, ObjectId } from "mongodb";
+import { MongoClient } from "mongodb";
 
 export async function POST(request: NextRequest) {
   try {
-    const { invitationId, userEmail } = await request.json();
+    const session = await auth();
 
-    if (!invitationId || !userEmail) {
-      return NextResponse.json(
-        { error: "Invitation ID and user email are required" },
-        { status: 400 }
-      );
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectToMainDB();
 
-    // Find the invitation
-    const invitation = await EmployeeInvitation.findById(invitationId);
+    // Look for pending invitation for this user
+    const invitation = await EmployeeInvitation.findOne({
+      email: session.user.email,
+      status: { $in: ["pending", undefined] }, // Include undefined for backward compatibility
+    });
 
     if (!invitation) {
-      return NextResponse.json(
-        { error: "Invalid invitation" },
-        { status: 404 }
-      );
-    }
-
-    if (invitation.email !== userEmail) {
-      return NextResponse.json({ error: "Email mismatch" }, { status: 403 });
-    }
-
-    if (invitation.status === "accepted") {
-      return NextResponse.json(
-        { error: "Invitation already accepted" },
-        { status: 409 }
-      );
+      return NextResponse.json({
+        accepted: false,
+        message: "No pending invitation found",
+      });
     }
 
     // Connect to main database to update user
@@ -44,11 +36,11 @@ export async function POST(request: NextRequest) {
 
     // Update the user record with company information from invitation
     const userUpdateResult = await db.collection("users").updateOne(
-      { email: userEmail },
+      { email: session.user.email },
       {
         $set: {
-          companyId: invitation.companyId, // This is the key fix
-          role: invitation.role,
+          companyId: invitation.companyId,
+          role: invitation.role || "employee",
           department: invitation.department,
           position: invitation.position,
           updatedAt: new Date(),
@@ -69,14 +61,13 @@ export async function POST(request: NextRequest) {
     await client.close();
 
     return NextResponse.json({
-      success: true,
+      accepted: true,
       message: "Invitation accepted successfully",
       companyId: invitation.companyId,
       role: invitation.role,
-      redirectTo: "/onboarding", // Explicitly tell frontend where to redirect
     });
   } catch (error) {
-    console.error("Error accepting invitation:", error);
+    console.error("Error checking/accepting invitation:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

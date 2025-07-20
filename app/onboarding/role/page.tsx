@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -17,6 +18,14 @@ export default function RoleSelectionPage() {
   const [loading, setLoading] = useState(false);
   const { data: session } = useSession();
   const router = useRouter();
+  const [isVisible, setIsVisible] = useState(false);
+  const [invitationStatus, setInvitationStatus] = useState<
+    "checking" | "invited" | "not-invited"
+  >("checking");
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
 
   const handleRoleSelection = async (role: "hr" | "employee") => {
     setLoading(true);
@@ -31,21 +40,46 @@ export default function RoleSelectionPage() {
       });
 
       if (response.ok) {
-        // Redirect based on role
+        const data = await response.json();
+        console.log("Set role response:", data);
+
+        // Redirect based on role and company status
         if (role === "hr") {
           router.push("/onboarding/company");
-        } else {
-          router.push("/onboarding/employee");
+        } else if (role === "employee") {
+          if (data.hasCompany) {
+            router.push("/onboarding");
+          } else {
+            router.push("/onboarding");
+          }
         }
       } else {
-        console.error("Failed to set user role");
+        const errorData = await response.json();
+        console.error("Failed to set user role:", errorData);
+        alert(errorData.error || "Failed to set role");
       }
     } catch (error) {
       console.error("Error setting user role:", error);
+      alert("Network error occurred");
     } finally {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    const checkInvitation = async () => {
+      try {
+        const response = await fetch("/api/user/invitation-status");
+        const data = await response.json();
+        setInvitationStatus(data.hasInvitation ? "invited" : "not-invited");
+      } catch (error) {
+        setInvitationStatus("not-invited");
+      }
+    };
+
+    if (session?.user?.email) {
+      checkInvitation();
+    }
+  }, [session]);
 
   if (!session) {
     return (
@@ -58,31 +92,83 @@ export default function RoleSelectionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            Welcome to NexusOne
+    <div className="min-h-screen bg-white flex items-center justify-center p-8 overflow-hidden">
+      <div
+        className={`w-full max-w-4xl relative z-10 transform transition-all duration-1000 ${
+          isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+        }`}
+      >
+        {/* Header Section */}
+        <div className="text-center mb-12 space-y-6">
+          {/* Status Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full border border-gray-200">
+            <div className="w-2 h-2 bg-gray-900 rounded-full animate-pulse"></div>
+            <span
+              className="text-sm font-semibold tracking-wide"
+              style={{
+                fontFamily: "Inter, system-ui, sans-serif",
+                color: "#0E0E0E",
+              }}
+            >
+              NEXUS - ROLE SELECTION
+            </span>
+          </div>
+
+          <h1
+            className="text-5xl font-black tracking-tight"
+            style={{
+              fontFamily: "Inter, system-ui, sans-serif",
+              color: "#0E0E0E",
+            }}
+          >
+            Welcome to <span className="text-gray-800">Nexus</span>
           </h1>
-          <p className="text-slate-600 text-lg">
-            Let's get you set up. How would you like to use NexusOne?
+
+          <p
+            className="text-xl leading-relaxed opacity-80 max-w-2xl mx-auto"
+            style={{
+              fontFamily: "Inter, system-ui, sans-serif",
+              color: "#0E0E0E",
+            }}
+          >
+            Let's get you set up. How would you like to use Nexus?
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* HR Role Card */}
-          <Card className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 border-2 hover:border-blue-300">
+          <Card className="group cursor-pointer transition-all duration-300 hover:shadow-lg border border-gray-200 hover:border-gray-400 bg-white rounded-xl">
             <CardHeader className="text-center pb-4">
-              <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                <Building2 className="w-8 h-8 text-blue-600" />
+              <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-gray-200 transition-colors">
+                <Building2 className="w-8 h-8" style={{ color: "#0E0E0E" }} />
               </div>
-              <CardTitle className="text-xl">I'm an HR Manager</CardTitle>
-              <CardDescription className="text-base">
+              <CardTitle
+                className="text-xl font-semibold"
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  color: "#0E0E0E",
+                }}
+              >
+                I'm an HR Manager
+              </CardTitle>
+              <CardDescription
+                className="text-base opacity-80"
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  color: "#0E0E0E",
+                }}
+              >
                 Register your company and manage employees
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
-              <ul className="text-sm text-slate-600 mb-6 space-y-2">
+              <ul
+                className="text-sm opacity-80 mb-6 space-y-2"
+                style={{
+                  color: "#0E0E0E",
+                  fontFamily: "Inter, system-ui, sans-serif",
+                }}
+              >
                 <li>• Create and manage your company profile</li>
                 <li>• Invite and manage employees</li>
                 <li>• Set up departments and roles</li>
@@ -91,27 +177,51 @@ export default function RoleSelectionPage() {
               <Button
                 onClick={() => handleRoleSelection("hr")}
                 disabled={loading}
-                className="w-full group-hover:bg-blue-700 transition-colors"
+                className="group relative w-full bg-black text-white font-semibold rounded-xl hover:bg-gray-900 transition-all duration-300 overflow-hidden"
+                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
               >
-                Get Started as HR Manager
-                <ArrowRight className="ml-2 w-4 h-4" />
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  Get Started as HR Manager
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-900 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
               </Button>
             </CardContent>
           </Card>
 
           {/* Employee Role Card */}
-          <Card className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 border-2 hover:border-green-300">
+          <Card className="group cursor-pointer transition-all duration-300 hover:shadow-lg border border-gray-200 hover:border-gray-400 bg-white rounded-xl">
             <CardHeader className="text-center pb-4">
-              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-green-200 transition-colors">
-                <Users className="w-8 h-8 text-green-600" />
+              <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-gray-200 transition-colors">
+                <Users className="w-8 h-8" style={{ color: "#0E0E0E" }} />
               </div>
-              <CardTitle className="text-xl">I'm an Employee</CardTitle>
-              <CardDescription className="text-base">
+              <CardTitle
+                className="text-xl font-semibold"
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  color: "#0E0E0E",
+                }}
+              >
+                I'm an Employee
+              </CardTitle>
+              <CardDescription
+                className="text-base opacity-80"
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  color: "#0E0E0E",
+                }}
+              >
                 Join your company's workspace
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
-              <ul className="text-sm text-slate-600 mb-6 space-y-2">
+              <ul
+                className="text-sm opacity-80 mb-6 space-y-2"
+                style={{
+                  color: "#0E0E0E",
+                  fontFamily: "Inter, system-ui, sans-serif",
+                }}
+              >
                 <li>• Join your company's workspace</li>
                 <li>• Access company resources and tools</li>
                 <li>• Connect with your team members</li>
@@ -120,20 +230,30 @@ export default function RoleSelectionPage() {
               <Button
                 onClick={() => handleRoleSelection("employee")}
                 disabled={loading}
-                variant="outline"
-                className="w-full group-hover:bg-green-50 group-hover:border-green-400 transition-colors"
+                className="group relative w-full border-2 font-semibold rounded-xl transition-all duration-300 border-gray-300 hover:border-gray-900 hover:bg-gray-50"
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  color: "#0E0E0E",
+                  backgroundColor: "white",
+                }}
               >
-                Join as Employee
-                <ArrowRight className="ml-2 w-4 h-4" />
+                <span className="flex items-center justify-center gap-2">
+                  Join as Employee
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </span>
               </Button>
             </CardContent>
           </Card>
         </div>
 
+        {/* Footer */}
         <div className="text-center mt-8">
-          <p className="text-sm text-slate-500">
-            Don't worry, you can change this later in your profile settings.
-          </p>
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+            <CheckCircle className="w-4 h-4 text-gray-700" />
+            <span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+              Don't worry, you can change this later in your profile settings
+            </span>
+          </div>
         </div>
       </div>
     </div>

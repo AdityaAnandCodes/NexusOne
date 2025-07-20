@@ -1,4 +1,24 @@
+"use client";
+
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+
 const Navbar = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      await signIn("google", {
+        callbackUrl: "/auth/callback",
+        redirect: true,
+      });
+    } catch (error) {
+      console.error("Sign in error:", error);
+      setIsLoading(false);
+    }
+  };
+
   return (
     <section className="flex justify-between items-center py-2.5 px-6">
       <img className="w-14 h-14" src="./Logo.png" />
@@ -24,9 +44,11 @@ const Navbar = () => {
       <button
         className="group relative px-6 py-2.5 bg-black text-white font-semibold rounded-xl hover:bg-gray-900 transition-all duration-300 overflow-hidden"
         style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+        onClick={handleGoogleSignIn}
+        disabled={isLoading}
       >
         <span className="relative z-10 flex items-center gap-2">
-          Get Started
+          {isLoading ? "Signing in..." : "Continue with Google"}
           <svg
             width="18"
             height="18"
@@ -34,7 +56,7 @@ const Navbar = () => {
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <g clip-path="url(#clip0_12_13)">
+            <g clipPath="url(#clip0_12_13)">
               <path
                 d="M5.57374 0.526248C3.97509 1.08083 2.59642 2.13346 1.64023 3.5295C0.684041 4.92554 0.200732 6.59143 0.261296 8.28245C0.32186 9.97348 0.923104 11.6005 1.97671 12.9246C3.03032 14.2486 4.48077 15.1999 6.11499 15.6387C7.4399 15.9806 8.828 15.9956 10.16 15.6825C11.3666 15.4115 12.4822 14.8317 13.3975 14C14.3501 13.1079 15.0415 11.9731 15.3975 10.7175C15.7844 9.35208 15.8532 7.91616 15.5987 6.52H8.15874V9.60625H12.4675C12.3814 10.0985 12.1968 10.5683 11.9249 10.9875C11.653 11.4068 11.2993 11.7669 10.885 12.0462C10.3588 12.3943 9.76574 12.6285 9.14374 12.7337C8.51992 12.8497 7.88006 12.8497 7.25624 12.7337C6.62398 12.603 6.02587 12.3421 5.49999 11.9675C4.65518 11.3695 4.02084 10.5199 3.68749 9.54C3.34851 8.54174 3.34851 7.45951 3.68749 6.46125C3.92478 5.76152 4.31703 5.12442 4.83499 4.5975C5.42773 3.98343 6.17816 3.54449 7.00394 3.32884C7.82972 3.11319 8.69894 3.12916 9.51624 3.375C10.1547 3.57099 10.7386 3.91342 11.2212 4.375C11.7071 3.89166 12.1921 3.40708 12.6762 2.92125C12.9262 2.66 13.1987 2.41125 13.445 2.14375C12.7082 1.45809 11.8433 0.924569 10.9 0.573748C9.18212 -0.0500151 7.30246 -0.0667781 5.57374 0.526248Z"
                 fill="white"
@@ -67,6 +89,6 @@ const Navbar = () => {
       </button>
     </section>
   );
-}
+};
 
-export default Navbar
+export default Navbar;

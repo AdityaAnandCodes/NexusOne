@@ -19,6 +19,7 @@ interface Invitation {
   temporaryPassword?: string;
   emailCredentialsGenerated?: boolean;
 }
+
 import {
   Card,
   CardContent,
@@ -239,27 +240,47 @@ export default function EmployeeManagement() {
     switch (status) {
       case "pending":
         return (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+          <Badge
+            variant="secondary"
+            className="bg-gray-100 text-gray-800 border border-gray-200"
+            style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+          >
             <Clock className="w-3 h-3 mr-1" />
             Pending
           </Badge>
         );
       case "accepted":
         return (
-          <Badge variant="secondary" className="bg-green-100 text-green-800">
+          <Badge
+            variant="secondary"
+            className="bg-gray-100 text-gray-800 border border-gray-200"
+            style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+          >
             <CheckCircle className="w-3 h-3 mr-1" />
             Accepted
           </Badge>
         );
       case "expired":
         return (
-          <Badge variant="secondary" className="bg-red-100 text-red-800">
+          <Badge
+            variant="secondary"
+            className="bg-gray-100 text-gray-800 border border-gray-200"
+            style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+          >
             <XCircle className="w-3 h-3 mr-1" />
             Expired
           </Badge>
         );
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-gray-100 text-gray-800 border border-gray-200"
+            style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+          >
+            {status}
+          </Badge>
+        );
     }
   };
 
@@ -275,10 +296,18 @@ export default function EmployeeManagement() {
   // Show loading state while checking authentication
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <Building2 className="h-16 w-16 text-white mx-auto mb-4 animate-pulse" />
-          <h1 className="text-2xl font-bold text-white mb-2">Loading...</h1>
+          <Building2 className="h-16 w-16 text-gray-700 mx-auto mb-4 animate-pulse" />
+          <h1
+            className="text-2xl font-bold mb-2"
+            style={{
+              fontFamily: "Inter, system-ui, sans-serif",
+              color: "#0E0E0E",
+            }}
+          >
+            Loading...
+          </h1>
         </div>
       </div>
     );
@@ -290,11 +319,25 @@ export default function EmployeeManagement() {
     !["hr_manager", "company_admin"].includes(session.user.role || "")
   ) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <XCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
-          <p className="text-white/70">
+          <XCircle className="h-16 w-16 text-gray-700 mx-auto mb-4" />
+          <h1
+            className="text-2xl font-bold mb-2"
+            style={{
+              fontFamily: "Inter, system-ui, sans-serif",
+              color: "#0E0E0E",
+            }}
+          >
+            Access Denied
+          </h1>
+          <p
+            className="opacity-80"
+            style={{
+              fontFamily: "Inter, system-ui, sans-serif",
+              color: "#0E0E0E",
+            }}
+          >
             You don't have permission to access this page.
           </p>
         </div>
@@ -303,434 +346,762 @@ export default function EmployeeManagement() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h1 className="text-3xl font-bold">Employee Management</h1>
-            <p className="text-slate-600">
-              Invite and manage your team members
-            </p>
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto py-8 px-4">
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h1
+                className="text-3xl font-black tracking-tight"
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  color: "#0E0E0E",
+                }}
+              >
+                Employee Management
+              </h1>
+              <p
+                className="opacity-80"
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  color: "#0E0E0E",
+                }}
+              >
+                Invite and manage your team members
+              </p>
+            </div>
+            <Button
+              onClick={() => setShowAddForm(true)}
+              className="bg-black text-white font-semibold rounded-xl hover:bg-gray-900 transition-all duration-300"
+              style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Employee
+            </Button>
           </div>
-          <Button
-            onClick={() => setShowAddForm(true)}
-            className="flex items-center"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Employee
-          </Button>
+
+          {/* Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <Card className="bg-white border border-gray-200 rounded-xl shadow-lg">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Users className="w-5 h-5 text-gray-700" />
+                  <div>
+                    <p
+                      className="text-sm opacity-80"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      Total Invited
+                    </p>
+                    <p
+                      className="text-xl font-semibold"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      {invitations.length}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white border border-gray-200 rounded-xl shadow-lg">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-gray-700" />
+                  <div>
+                    <p
+                      className="text-sm opacity-80"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      Accepted
+                    </p>
+                    <p
+                      className="text-xl font-semibold"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      {
+                        invitations.filter((i) => i.status === "accepted")
+                          .length
+                      }
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white border border-gray-200 rounded-xl shadow-lg">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Clock className="w-5 h-5 text-gray-700" />
+                  <div>
+                    <p
+                      className="text-sm opacity-80"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      Pending
+                    </p>
+                    <p
+                      className="text-xl font-semibold"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      {invitations.filter((i) => i.status === "pending").length}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white border border-gray-200 rounded-xl shadow-lg">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <XCircle className="w-5 h-5 text-gray-700" />
+                  <div>
+                    <p
+                      className="text-sm opacity-80"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      Expired
+                    </p>
+                    <p
+                      className="text-xl font-semibold"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      {invitations.filter((i) => i.status === "expired").length}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Users className="w-5 h-5 text-blue-600" />
-                <div>
-                  <p className="text-sm text-slate-600">Total Invited</p>
-                  <p className="text-xl font-semibold">{invitations.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <div>
-                  <p className="text-sm text-slate-600">Accepted</p>
-                  <p className="text-xl font-semibold">
-                    {invitations.filter((i) => i.status === "accepted").length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Clock className="w-5 h-5 text-yellow-600" />
-                <div>
-                  <p className="text-sm text-slate-600">Pending</p>
-                  <p className="text-xl font-semibold">
-                    {invitations.filter((i) => i.status === "pending").length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <XCircle className="w-5 h-5 text-red-600" />
-                <div>
-                  <p className="text-sm text-slate-600">Expired</p>
-                  <p className="text-xl font-semibold">
-                    {invitations.filter((i) => i.status === "expired").length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+        {/* Add Employee Form */}
+        {showAddForm && (
+          <Card className="bg-white border border-gray-200 rounded-xl shadow-lg mb-8">
+            <CardHeader>
+              <CardTitle
+                className="font-semibold"
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  color: "#0E0E0E",
+                }}
+              >
+                Add New Employee
+              </CardTitle>
+              <CardDescription
+                className="opacity-80"
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  color: "#0E0E0E",
+                }}
+              >
+                Upload a resume to auto-extract information or fill details
+                manually
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Resume Upload Section */}
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-3">
+                    <Brain className="w-8 h-8 text-gray-700 mr-2" />
+                    <h3
+                      className="text-lg font-semibold"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      AI Resume Processing
+                    </h3>
+                  </div>
 
-      {/* Add Employee Form */}
-      {showAddForm && (
-        <Card className="mb-8">
+                  {!resumeFile ? (
+                    <div>
+                      <FileText className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                      <p
+                        className="opacity-80 mb-4"
+                        style={{
+                          fontFamily: "Inter, system-ui, sans-serif",
+                          color: "#0E0E0E",
+                        }}
+                      >
+                        Upload a resume to automatically extract name, email,
+                        phone, and skills
+                      </p>
+                      <label className="inline-flex items-center px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-900 cursor-pointer transition-all duration-300">
+                        <Upload className="w-4 h-4 mr-2" />
+                        Choose Resume File
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx,.txt"
+                          onChange={handleResumeUpload}
+                          className="hidden"
+                        />
+                      </label>
+                      <p
+                        className="text-xs opacity-60 mt-2"
+                        style={{
+                          fontFamily: "Inter, system-ui, sans-serif",
+                          color: "#0E0E0E",
+                        }}
+                      >
+                        Supports PDF, DOC, DOCX, and TXT files (max 10MB)
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      {processingResume ? (
+                        <div>
+                          <div className="animate-spin w-8 h-8 border-4 border-gray-900 border-t-transparent rounded-full mx-auto mb-3"></div>
+                          <p
+                            className="font-medium"
+                            style={{
+                              fontFamily: "Inter, system-ui, sans-serif",
+                              color: "#0E0E0E",
+                            }}
+                          >
+                            Processing resume with AI...
+                          </p>
+                          <p
+                            className="text-sm opacity-80"
+                            style={{
+                              fontFamily: "Inter, system-ui, sans-serif",
+                              color: "#0E0E0E",
+                            }}
+                          >
+                            Extracting name, email, phone, and skills
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <CheckCircle className="w-8 h-8 text-gray-700 mx-auto mb-3" />
+                          <p
+                            className="font-medium"
+                            style={{
+                              fontFamily: "Inter, system-ui, sans-serif",
+                              color: "#0E0E0E",
+                            }}
+                          >
+                            Resume processed successfully!
+                          </p>
+                          <p
+                            className="text-sm opacity-80 mb-3"
+                            style={{
+                              fontFamily: "Inter, system-ui, sans-serif",
+                              color: "#0E0E0E",
+                            }}
+                          >
+                            File: {resumeFile.name}
+                          </p>
+                          {resumeProcessed && (
+                            <div className="bg-gray-100 p-3 rounded-lg text-sm border border-gray-200">
+                              <p
+                                className="font-medium"
+                                style={{
+                                  fontFamily: "Inter, system-ui, sans-serif",
+                                  color: "#0E0E0E",
+                                }}
+                              >
+                                Auto-extracted information:
+                              </p>
+                              <div
+                                className="mt-1 opacity-80"
+                                style={{
+                                  fontFamily: "Inter, system-ui, sans-serif",
+                                  color: "#0E0E0E",
+                                }}
+                              >
+                                {newEmployee.name && (
+                                  <p>• Name: {newEmployee.name}</p>
+                                )}
+                                {newEmployee.email && (
+                                  <p>• Email: {newEmployee.email}</p>
+                                )}
+                                {newEmployee.phone && (
+                                  <p>• Phone: {newEmployee.phone}</p>
+                                )}
+                                {newEmployee.skills && (
+                                  <p>• Skills: {newEmployee.skills}</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          <button
+                            onClick={() => {
+                              setResumeFile(null);
+                              setResumeProcessed(false);
+                            }}
+                            className="mt-3 text-gray-700 hover:text-gray-900 text-sm underline"
+                            style={{
+                              fontFamily: "Inter, system-ui, sans-serif",
+                            }}
+                          >
+                            Upload different resume
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <form onSubmit={handleAddEmployee} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label
+                      htmlFor="name"
+                      className="flex items-center text-sm font-medium mb-2"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      Employee Name *
+                      {resumeProcessed && newEmployee.name && (
+                        <span title="Auto-extracted from resume">
+                          <Brain className="w-3 h-3 ml-1 text-gray-700" />
+                        </span>
+                      )}
+                    </Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      required
+                      value={newEmployee.name}
+                      onChange={(e) =>
+                        setNewEmployee({ ...newEmployee, name: e.target.value })
+                      }
+                      placeholder="John Doe"
+                      className={`border-gray-300 rounded-xl focus:border-gray-900 focus:ring-gray-900 ${
+                        resumeProcessed && newEmployee.name
+                          ? "bg-gray-50 border-gray-400"
+                          : ""
+                      }`}
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="email"
+                      className="flex items-center text-sm font-medium mb-2"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      Personal Email Address *
+                      {resumeProcessed && newEmployee.email && (
+                        <span title="Auto-extracted from resume">
+                          <Brain className="w-3 h-3 ml-1 text-gray-700" />
+                        </span>
+                      )}
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      required
+                      value={newEmployee.email}
+                      onChange={(e) =>
+                        setNewEmployee({
+                          ...newEmployee,
+                          email: e.target.value,
+                        })
+                      }
+                      placeholder="john@personal.com"
+                      className={`border-gray-300 rounded-xl focus:border-gray-900 focus:ring-gray-900 ${
+                        resumeProcessed && newEmployee.email
+                          ? "bg-gray-50 border-gray-400"
+                          : ""
+                      }`}
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                      }}
+                    />
+                    <p
+                      className="text-xs opacity-60 mt-1"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      We'll create a company Gmail account and send credentials
+                      here
+                    </p>
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="phone"
+                      className="flex items-center text-sm font-medium mb-2"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      Phone Number
+                      {resumeProcessed && newEmployee.phone && (
+                        <span title="Auto-extracted from resume">
+                          <Brain className="w-3 h-3 ml-1 text-gray-700" />
+                        </span>
+                      )}
+                    </Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={newEmployee.phone}
+                      onChange={(e) =>
+                        setNewEmployee({
+                          ...newEmployee,
+                          phone: e.target.value,
+                        })
+                      }
+                      placeholder="+1234567890"
+                      className={`border-gray-300 rounded-xl focus:border-gray-900 focus:ring-gray-900 ${
+                        resumeProcessed && newEmployee.phone
+                          ? "bg-gray-50 border-gray-400"
+                          : ""
+                      }`}
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                      }}
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label
+                      htmlFor="skills"
+                      className="flex items-center text-sm font-medium mb-2"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      Skills & Technologies
+                      {resumeProcessed && newEmployee.skills && (
+                        <span title="Auto-extracted from resume">
+                          <Brain className="w-3 h-3 ml-1 text-gray-700" />
+                        </span>
+                      )}
+                    </Label>
+                    <Input
+                      id="skills"
+                      type="text"
+                      value={newEmployee.skills}
+                      onChange={(e) =>
+                        setNewEmployee({
+                          ...newEmployee,
+                          skills: e.target.value,
+                        })
+                      }
+                      placeholder="JavaScript, React, Node.js, Project Management"
+                      className={`border-gray-300 rounded-xl focus:border-gray-900 focus:ring-gray-900 ${
+                        resumeProcessed && newEmployee.skills
+                          ? "bg-gray-50 border-gray-400"
+                          : ""
+                      }`}
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                      }}
+                    />
+                    <p
+                      className="text-xs opacity-60 mt-1"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      Separate multiple skills with commas
+                    </p>
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="role"
+                      className="text-sm font-medium mb-2 block"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      Role
+                    </Label>
+                    <select
+                      id="role"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:border-gray-900 focus:ring-gray-900"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                      }}
+                      value={newEmployee.role}
+                      onChange={(e) =>
+                        setNewEmployee({ ...newEmployee, role: e.target.value })
+                      }
+                    >
+                      <option value="employee">Employee</option>
+                      <option value="hr_manager">HR Manager</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="department"
+                      className="text-sm font-medium mb-2 block"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      Department
+                    </Label>
+                    <Input
+                      id="department"
+                      value={newEmployee.department}
+                      onChange={(e) =>
+                        setNewEmployee({
+                          ...newEmployee,
+                          department: e.target.value,
+                        })
+                      }
+                      placeholder="e.g., Engineering, Marketing"
+                      className="border-gray-300 rounded-xl focus:border-gray-900 focus:ring-gray-900"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="position"
+                      className="text-sm font-medium mb-2 block"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                        color: "#0E0E0E",
+                      }}
+                    >
+                      Position
+                    </Label>
+                    <Input
+                      id="position"
+                      value={newEmployee.position}
+                      onChange={(e) =>
+                        setNewEmployee({
+                          ...newEmployee,
+                          position: e.target.value,
+                        })
+                      }
+                      placeholder="e.g., Software Engineer, Marketing Manager"
+                      className="border-gray-300 rounded-xl focus:border-gray-900 focus:ring-gray-900"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="flex space-x-4">
+                  <Button
+                    type="submit"
+                    disabled={loading || processingResume}
+                    className="bg-black text-white font-semibold rounded-xl hover:bg-gray-900 transition-all duration-300"
+                    style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                  >
+                    {loading ? "Adding Employee..." : "Add Employee"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCloseForm}
+                    className="border-2 border-gray-300 font-semibold rounded-xl hover:border-gray-900 hover:bg-gray-50 transition-all duration-300"
+                    style={{
+                      fontFamily: "Inter, system-ui, sans-serif",
+                      color: "#0E0E0E",
+                      backgroundColor: "white",
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Invitations List */}
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-lg">
           <CardHeader>
-            <CardTitle>Add New Employee</CardTitle>
-            <CardDescription>
-              Upload a resume to auto-extract information or fill details
-              manually
+            <CardTitle
+              className="font-semibold"
+              style={{
+                fontFamily: "Inter, system-ui, sans-serif",
+                color: "#0E0E0E",
+              }}
+            >
+              Employee Invitations
+            </CardTitle>
+            <CardDescription
+              className="opacity-80"
+              style={{
+                fontFamily: "Inter, system-ui, sans-serif",
+                color: "#0E0E0E",
+              }}
+            >
+              Manage all employee invitations and their status
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Resume Upload Section */}
-            <div className="mb-6 p-4 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-3">
-                  <Brain className="w-8 h-8 text-blue-600 mr-2" />
-                  <h3 className="text-lg font-semibold">
-                    AI Resume Processing
-                  </h3>
-                </div>
-
-                {!resumeFile ? (
-                  <div>
-                    <FileText className="w-12 h-12 mx-auto mb-4 text-slate-400" />
-                    <p className="text-slate-600 mb-4">
-                      Upload a resume to automatically extract name, email,
-                      phone, and skills
-                    </p>
-                    <label className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer">
-                      <Upload className="w-4 h-4 mr-2" />
-                      Choose Resume File
-                      <input
-                        type="file"
-                        accept=".pdf,.doc,.docx,.txt"
-                        onChange={handleResumeUpload}
-                        className="hidden"
-                      />
-                    </label>
-                    <p className="text-xs text-slate-500 mt-2">
-                      Supports PDF, DOC, DOCX, and TXT files (max 10MB)
-                    </p>
-                  </div>
-                ) : (
-                  <div>
-                    {processingResume ? (
-                      <div>
-                        <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-3"></div>
-                        <p className="text-blue-600 font-medium">
-                          Processing resume with AI...
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          Extracting name, email, phone, and skills
-                        </p>
-                      </div>
-                    ) : (
-                      <div>
-                        <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-3" />
-                        <p className="text-green-600 font-medium">
-                          Resume processed successfully!
-                        </p>
-                        <p className="text-sm text-slate-600 mb-3">
-                          File: {resumeFile.name}
-                        </p>
-                        {resumeProcessed && (
-                          <div className="bg-green-50 p-3 rounded-lg text-sm">
-                            <p className="text-green-700 font-medium">
-                              Auto-extracted information:
-                            </p>
-                            <div className="text-green-600 mt-1">
-                              {newEmployee.name && (
-                                <p>• Name: {newEmployee.name}</p>
-                              )}
-                              {newEmployee.email && (
-                                <p>• Email: {newEmployee.email}</p>
-                              )}
-                              {newEmployee.phone && (
-                                <p>• Phone: {newEmployee.phone}</p>
-                              )}
-                              {newEmployee.skills && (
-                                <p>• Skills: {newEmployee.skills}</p>
+            {invitations.length === 0 ? (
+              <div className="text-center py-8">
+                <Mail className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <p
+                  className="opacity-80"
+                  style={{
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    color: "#0E0E0E",
+                  }}
+                >
+                  No employees added yet
+                </p>
+                <p
+                  className="text-sm opacity-60"
+                  style={{
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    color: "#0E0E0E",
+                  }}
+                >
+                  Click "Add Employee" to get started
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {invitations.map((invitation) => (
+                  <div
+                    key={invitation._id}
+                    className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:border-gray-400 transition-all duration-300"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-1">
+                          <p
+                            className="font-medium"
+                            style={{
+                              fontFamily: "Inter, system-ui, sans-serif",
+                              color: "#0E0E0E",
+                            }}
+                          >
+                            {invitation.email}
+                          </p>
+                          <div
+                            className="flex items-center space-x-2 text-sm opacity-80"
+                            style={{
+                              fontFamily: "Inter, system-ui, sans-serif",
+                              color: "#0E0E0E",
+                            }}
+                          >
+                            <span>{invitation.role.replace("_", " ")}</span>
+                            {invitation.department && (
+                              <span>• {invitation.department}</span>
+                            )}
+                            {invitation.position && (
+                              <span>• {invitation.position}</span>
+                            )}
+                          </div>
+                          {invitation.phone && (
+                            <div
+                              className="flex items-center space-x-2 text-sm opacity-80 mt-1"
+                              style={{
+                                fontFamily: "Inter, system-ui, sans-serif",
+                                color: "#0E0E0E",
+                              }}
+                            >
+                              <span>📞 {invitation.phone}</span>
+                            </div>
+                          )}
+                          {invitation.skills &&
+                            invitation.skills.length > 0 && (
+                              <div
+                                className="flex items-center space-x-2 text-sm opacity-80 mt-1"
+                                style={{
+                                  fontFamily: "Inter, system-ui, sans-serif",
+                                  color: "#0E0E0E",
+                                }}
+                              >
+                                <span>
+                                  🛠️ {invitation.skills.slice(0, 3).join(", ")}
+                                </span>
+                                {invitation.skills.length > 3 && (
+                                  <span className="opacity-60">
+                                    +{invitation.skills.length - 3} more
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          {invitation.generatedEmail && (
+                            <div
+                              className="flex items-center space-x-2 text-sm opacity-80 mt-1"
+                              style={{
+                                fontFamily: "Inter, system-ui, sans-serif",
+                                color: "#0E0E0E",
+                              }}
+                            >
+                              <Mail className="w-3 h-3" />
+                              <span>
+                                Company Email: {invitation.generatedEmail}
+                              </span>
+                              {invitation.emailCredentialsGenerated && (
+                                <CheckCircle className="w-3 h-3 text-gray-700" />
                               )}
                             </div>
-                          </div>
-                        )}
-                        <button
-                          onClick={() => {
-                            setResumeFile(null);
-                            setResumeProcessed(false);
-                          }}
-                          className="mt-3 text-blue-600 hover:text-blue-700 text-sm underline"
-                        >
-                          Upload different resume
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <form onSubmit={handleAddEmployee} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name" className="flex items-center">
-                    Employee Name *
-                    {resumeProcessed && newEmployee.name && (
-                      <span title="Auto-extracted from resume">
-                        <Brain className="w-3 h-3 ml-1 text-blue-600" />
-                      </span>
-                    )}
-                  </Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    required
-                    value={newEmployee.name}
-                    onChange={(e) =>
-                      setNewEmployee({ ...newEmployee, name: e.target.value })
-                    }
-                    placeholder="John Doe"
-                    className={
-                      resumeProcessed && newEmployee.name
-                        ? "bg-blue-50 border-blue-300"
-                        : ""
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email" className="flex items-center">
-                    Personal Email Address *
-                    {resumeProcessed && newEmployee.email && (
-                      <span title="Auto-extracted from resume">
-                        <Brain className="w-3 h-3 ml-1 text-blue-600" />
-                      </span>
-                    )}
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    required
-                    value={newEmployee.email}
-                    onChange={(e) =>
-                      setNewEmployee({ ...newEmployee, email: e.target.value })
-                    }
-                    placeholder="john@personal.com"
-                    className={
-                      resumeProcessed && newEmployee.email
-                        ? "bg-blue-50 border-blue-300"
-                        : ""
-                    }
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    We'll create a company Gmail account and send credentials
-                    here
-                  </p>
-                </div>
-                <div>
-                  <Label htmlFor="phone" className="flex items-center">
-                    Phone Number
-                    {resumeProcessed && newEmployee.phone && (
-                      <span title="Auto-extracted from resume">
-                        <Brain className="w-3 h-3 ml-1 text-blue-600" />
-                      </span>
-                    )}
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={newEmployee.phone}
-                    onChange={(e) =>
-                      setNewEmployee({ ...newEmployee, phone: e.target.value })
-                    }
-                    placeholder="+1234567890"
-                    className={
-                      resumeProcessed && newEmployee.phone
-                        ? "bg-blue-50 border-blue-300"
-                        : ""
-                    }
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <Label htmlFor="skills" className="flex items-center">
-                    Skills & Technologies
-                    {resumeProcessed && newEmployee.skills && (
-                      <span title="Auto-extracted from resume">
-                        <Brain className="w-3 h-3 ml-1 text-blue-600" />
-                      </span>
-                    )}
-                  </Label>
-                  <Input
-                    id="skills"
-                    type="text"
-                    value={newEmployee.skills}
-                    onChange={(e) =>
-                      setNewEmployee({ ...newEmployee, skills: e.target.value })
-                    }
-                    placeholder="JavaScript, React, Node.js, Project Management"
-                    className={
-                      resumeProcessed && newEmployee.skills
-                        ? "bg-blue-50 border-blue-300"
-                        : ""
-                    }
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    Separate multiple skills with commas
-                  </p>
-                </div>
-                <div>
-                  <Label htmlFor="role">Role</Label>
-                  <select
-                    id="role"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md"
-                    value={newEmployee.role}
-                    onChange={(e) =>
-                      setNewEmployee({ ...newEmployee, role: e.target.value })
-                    }
-                  >
-                    <option value="employee">Employee</option>
-                    <option value="hr_manager">HR Manager</option>
-                  </select>
-                </div>
-                <div>
-                  <Label htmlFor="department">Department</Label>
-                  <Input
-                    id="department"
-                    value={newEmployee.department}
-                    onChange={(e) =>
-                      setNewEmployee({
-                        ...newEmployee,
-                        department: e.target.value,
-                      })
-                    }
-                    placeholder="e.g., Engineering, Marketing"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="position">Position</Label>
-                  <Input
-                    id="position"
-                    value={newEmployee.position}
-                    onChange={(e) =>
-                      setNewEmployee({
-                        ...newEmployee,
-                        position: e.target.value,
-                      })
-                    }
-                    placeholder="e.g., Software Engineer, Marketing Manager"
-                  />
-                </div>
-              </div>
-              <div className="flex space-x-4">
-                <Button type="submit" disabled={loading || processingResume}>
-                  {loading ? "Adding Employee..." : "Add Employee"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCloseForm}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Invitations List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Employee Invitations</CardTitle>
-          <CardDescription>
-            Manage all employee invitations and their status
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {invitations.length === 0 ? (
-            <div className="text-center py-8">
-              <Mail className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-              <p className="text-slate-500">No employees added yet</p>
-              <p className="text-sm text-slate-400">
-                Click "Add Employee" to get started
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {invitations.map((invitation) => (
-                <div
-                  key={invitation._id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-1">
-                        <p className="font-medium">{invitation.email}</p>
-                        <div className="flex items-center space-x-2 text-sm text-slate-600">
-                          <span>{invitation.role.replace("_", " ")}</span>
-                          {invitation.department && (
-                            <span>• {invitation.department}</span>
-                          )}
-                          {invitation.position && (
-                            <span>• {invitation.position}</span>
                           )}
                         </div>
-                        {invitation.phone && (
-                          <div className="flex items-center space-x-2 text-sm text-slate-600 mt-1">
-                            <span>📞 {invitation.phone}</span>
-                          </div>
-                        )}
-                        {invitation.skills && invitation.skills.length > 0 && (
-                          <div className="flex items-center space-x-2 text-sm text-slate-600 mt-1">
-                            <span>
-                              🛠️ {invitation.skills.slice(0, 3).join(", ")}
-                            </span>
-                            {invitation.skills.length > 3 && (
-                              <span className="text-slate-400">
-                                +{invitation.skills.length - 3} more
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        {invitation.generatedEmail && (
-                          <div className="flex items-center space-x-2 text-sm text-emerald-600 mt-1">
-                            <Mail className="w-3 h-3" />
-                            <span>
-                              Company Email: {invitation.generatedEmail}
-                            </span>
-                            {invitation.emailCredentialsGenerated && (
-                              <CheckCircle className="w-3 h-3 text-green-500" />
-                            )}
-                          </div>
-                        )}
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    {getStatusBadge(invitation.status)}
-                    <div className="text-sm text-slate-500">
-                      Sent {new Date(invitation.invitedAt).toLocaleDateString()}
+                    <div className="flex items-center space-x-4">
+                      {getStatusBadge(invitation.status)}
+                      <div
+                        className="text-sm opacity-80"
+                        style={{
+                          fontFamily: "Inter, system-ui, sans-serif",
+                          color: "#0E0E0E",
+                        }}
+                      >
+                        Sent{" "}
+                        {new Date(invitation.invitedAt).toLocaleDateString()}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteInvitation(invitation._id)}
+                        className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl"
+                        style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteInvitation(invitation._id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

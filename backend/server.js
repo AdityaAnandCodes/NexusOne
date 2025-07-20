@@ -78,29 +78,75 @@ app.post("/api/extract-text", upload.single("file"), async (req, res) => {
     }
 
     console.log(
-      `🔍 Extracting text from: ${req.file.originalname} (${req.file.mimetype})`
+      `🔍 Extracting text from: ${req.file.originalname} (${req.file.mimetype}) - ${req.file.size} bytes`
     );
+
+    // Validate file size (additional check)
+    const maxSize = 15 * 1024 * 1024; // 15MB
+    if (req.file.size > maxSize) {
+      return res.status(400).json({
+        success: false,
+        error: "File too large. Please upload a file smaller than 15MB.",
+      });
+    }
 
     // Extract text using your existing text extractor
     let extractedText = "";
+    let extractionWarnings = [];
+
     try {
       extractedText = await textExtractor.extractText(req.file);
 
       if (!extractedText || extractedText.trim().length === 0) {
         return res.status(400).json({
           success: false,
-          error: "No text content could be extracted from the file",
+          error:
+            "No text content could be extracted from the file. This might be a scanned document requiring OCR, or the file may be corrupted.",
         });
+      }
+
+      // Validate text quality
+      if (textExtractor.validateText) {
+        const validation = textExtractor.validateText(extractedText);
+        if (validation.warnings && validation.warnings.length > 0) {
+          extractionWarnings = validation.warnings;
+          console.log(`⚠️ Text validation warnings:`, validation.warnings);
+        }
       }
 
       console.log(
         `✅ Successfully extracted ${extractedText.length} characters from ${req.file.originalname}`
       );
     } catch (error) {
-      console.error("Text extraction failed:", error);
+      console.error("❌ Text extraction failed:", error);
+
+      // Return more specific error messages
+      let errorMessage = "Text extraction failed";
+      if (
+        error.message.includes("corrupted") ||
+        error.message.includes("Invalid PDF structure")
+      ) {
+        errorMessage =
+          "The file appears to be corrupted or has an invalid structure. Please try uploading a different version.";
+      } else if (error.message.includes("password")) {
+        errorMessage =
+          "This file is password protected. Please upload an unprotected version.";
+      } else if (
+        error.message.includes("OCR") ||
+        error.message.includes("scanned")
+      ) {
+        errorMessage =
+          "This appears to be a scanned document. Only text-based documents are supported.";
+      } else if (error.message.includes("Unsupported file type")) {
+        errorMessage =
+          "Unsupported file type. Please upload a PDF, DOC, DOCX, or TXT file.";
+      }
+
       return res.status(400).json({
         success: false,
-        error: `Text extraction failed: ${error.message}`,
+        error: errorMessage,
+        details:
+          process.env.NODE_ENV === "development" ? error.message : undefined,
       });
     }
 
@@ -109,6 +155,12 @@ app.post("/api/extract-text", upload.single("file"), async (req, res) => {
       ? textExtractor.cleanText(extractedText)
       : extractedText;
 
+    // Additional text processing stats
+    const wordCount = cleanedText
+      .split(/\s+/)
+      .filter((word) => word.length > 0).length;
+    const lineCount = cleanedText.split("\n").length;
+
     // Return the extracted text for Next.js to handle
     res.json({
       success: true,
@@ -116,17 +168,19 @@ app.post("/api/extract-text", upload.single("file"), async (req, res) => {
       metadata: {
         filename: req.file.originalname,
         originalType: req.file.mimetype,
+        fileSize: req.file.size,
         textLength: cleanedText.length,
-        wordCount: cleanedText.split(/\s+/).filter((word) => word.length > 0)
-          .length,
+        wordCount: wordCount,
+        lineCount: lineCount,
         extractedAt: new Date().toISOString(),
+        warnings: extractionWarnings,
       },
     });
   } catch (error) {
     console.error("❌ Text extraction error:", error);
     res.status(500).json({
       success: false,
-      error: "Text extraction failed",
+      error: "Text extraction service error",
       message:
         process.env.NODE_ENV === "development"
           ? error.message
