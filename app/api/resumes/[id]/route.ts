@@ -7,7 +7,7 @@ import { hasHRAccess } from "@/lib/utils/roleCheck";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // Make params a Promise
 ) {
   try {
     const session = await auth();
@@ -23,12 +23,18 @@ export async function GET(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
+    // Await the params
+    const resolvedParams = await params;
+
     const client = new MongoClient(process.env.MONGODB_URI!);
     await client.connect();
     const db = client.db(process.env.MONGODB_DB_NAME);
     const bucket = new GridFSBucket(db, { bucketName: "resumes" });
 
-    const downloadStream = bucket.openDownloadStream(new ObjectId(params.id));
+    // Use resolvedParams.id instead of params.id
+    const downloadStream = bucket.openDownloadStream(
+      new ObjectId(resolvedParams.id)
+    );
     const chunks: Buffer[] = [];
 
     return new Promise<NextResponse>((resolve) => {
@@ -39,10 +45,10 @@ export async function GET(
       downloadStream.on("end", async () => {
         const buffer = Buffer.concat(chunks);
 
-        // Get file info for headers
+        // Get file info for headers - use resolvedParams.id
         const fileInfo = await db
           .collection("resumes.files")
-          .findOne({ _id: new ObjectId(params.id) });
+          .findOne({ _id: new ObjectId(resolvedParams.id) });
 
         client.close();
 
