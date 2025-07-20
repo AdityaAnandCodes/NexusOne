@@ -14,7 +14,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-
 export default function SignIn() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -62,18 +61,40 @@ export default function SignIn() {
         <div className="space-y-8 transform transition-all duration-1000 translate-y-0 opacity-100">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full border border-gray-200 mx-auto">
             <div className="w-2 h-2 bg-gray-900 rounded-full animate-pulse"></div>
-            <span className="text-sm font-semibold tracking-wide" style={{ fontFamily: "Inter, system-ui, sans-serif", color: "#0E0E0E" }}>
+            <span
+              className="text-sm font-semibold tracking-wide"
+              style={{
+                fontFamily: "Inter, system-ui, sans-serif",
+                color: "#0E0E0E",
+              }}
+            >
               NEXUS - ALL IN ONE AGENT
             </span>
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-black tracking-tight text-center" style={{ fontFamily: "Inter, system-ui, sans-serif", color: "#0E0E0E" }}>
-            Welcome Back<br />
+          <h1
+            className="text-5xl md:text-6xl font-black tracking-tight text-center"
+            style={{
+              fontFamily: "Inter, system-ui, sans-serif",
+              color: "#0E0E0E",
+            }}
+          >
+            Welcome Back
+            <br />
             <span className="text-gray-800">Sign in to your workspace</span>
           </h1>
 
-          <p className="text-lg leading-relaxed opacity-80 max-w-2xl mx-auto text-center" style={{ fontFamily: "Inter, system-ui, sans-serif", color: "#0E0E0E" }}>
-            Nexus One is an intelligent AI agent that revolutionizes company onboarding and streamlines your workflow through seamless integrations with Mail, GitHub, Notion, Jira, and other WorkOS applications.
+          <p
+            className="text-lg leading-relaxed opacity-80 max-w-2xl mx-auto text-center"
+            style={{
+              fontFamily: "Inter, system-ui, sans-serif",
+              color: "#0E0E0E",
+            }}
+          >
+            Nexus One is an intelligent AI agent that revolutionizes company
+            onboarding and streamlines your workflow through seamless
+            integrations with Mail, GitHub, Notion, Jira, and other WorkOS
+            applications.
           </p>
         </div>
 
@@ -112,7 +133,10 @@ export default function SignIn() {
           <div className="text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
-              <Link href="/onboarding/company" className="text-blue-400 hover:text-blue-300 underline">
+              <Link
+                href="/onboarding/company"
+                className="text-blue-400 hover:text-blue-300 underline"
+              >
                 Create one for your company
               </Link>
             </p>
@@ -122,16 +146,58 @@ export default function SignIn() {
         {/* Trust Indicators */}
         <div className="flex items-center gap-6 pt-4 justify-center">
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4" /></svg>
-            <span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>Enterprise Ready</span>
+            <svg
+              className="w-4 h-4 text-gray-700"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12l2 2 4-4"
+              />
+            </svg>
+            <span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+              Enterprise Ready
+            </span>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4" /></svg>
-            <span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>SOC 2 Compliant</span>
+            <svg
+              className="w-4 h-4 text-gray-700"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12l2 2 4-4"
+              />
+            </svg>
+            <span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+              SOC 2 Compliant
+            </span>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4" /></svg>
-            <span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>GDPR Ready</span>
+            <svg
+              className="w-4 h-4 text-gray-700"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12l2 2 4-4"
+              />
+            </svg>
+            <span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+              GDPR Ready
+            </span>
           </div>
         </div>
 
