@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+import type { JSX } from "react";
 import { useGitHub } from "@/hooks/useGithub";
 import { useState, useEffect } from "react";
 
@@ -40,7 +42,7 @@ export default function GitHubIntegration(): JSX.Element {
     getIssues,
     disconnect,
   } = useGitHub();
-  
+
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<string>("");
   const [issues, setIssues] = useState<Issue[]>([]);
@@ -49,7 +51,7 @@ export default function GitHubIntegration(): JSX.Element {
 
   const handleConnect = (): void => {
     const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
-    
+
     if (!clientId) {
       console.error("GitHub client ID is not configured");
       return;

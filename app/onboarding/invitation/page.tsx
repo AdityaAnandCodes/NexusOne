@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
+import { Suspense } from "react";
 
 interface InvitationDetails {
   _id: string;
@@ -17,7 +18,7 @@ interface InvitationDetails {
   status: string;
 }
 
-export default function InvitationAcceptance() {
+function InvitationAcceptanceContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -254,5 +255,38 @@ export default function InvitationAcceptance() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Loading fallback component
+function InvitationLoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-8 text-white text-center">
+            <h1 className="text-3xl font-bold">Loading Invitation...</h1>
+            <p className="mt-2 text-blue-100">
+              Please wait while we prepare your invitation
+            </p>
+          </div>
+
+          {/* Content */}
+          <div className="px-6 py-8 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading invitation details...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function InvitationAcceptance() {
+  return (
+    <Suspense fallback={<InvitationLoadingFallback />}>
+      <InvitationAcceptanceContent />
+    </Suspense>
   );
 }

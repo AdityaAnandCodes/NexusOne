@@ -3,9 +3,10 @@ import { cookies } from "next/headers";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { accountId: string } }
+  { params }: { params: Promise<{ accountId: string }> }
 ) {
   try {
+    const { accountId } = await params;
     const cookieStore = await cookies();
     const accessToken = cookieStore.get("jira_access_token")?.value;
     const userDataCookie = cookieStore.get("jira_user_data")?.value;
@@ -17,7 +18,6 @@ export async function GET(
     const userData = JSON.parse(userDataCookie);
     const { searchParams } = new URL(request.url);
     const siteId = searchParams.get("siteId") || userData.sites[0]?.id;
-    const { accountId } = params;
 
     if (!siteId || !accountId) {
       return NextResponse.json(

@@ -1,17 +1,15 @@
-"use client"
+"use client";
 import React, { useState, useEffect, useRef } from "react";
 import { Mic, Square, Play } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
-
-
-const WobblyCircle = ({ isAnimating }) => {
-  const pathRef = useRef();
+const WobblyCircle = ({ isAnimating }: { isAnimating: boolean }) => {
+  const pathRef = useRef<SVGPathElement>(null);
 
   useEffect(() => {
     if (!isAnimating || !pathRef.current) return;
 
-    let animationId;
+    let animationId: number | undefined;
     const startTime = Date.now();
 
     const animate = () => {
@@ -65,7 +63,9 @@ const WobblyCircle = ({ isAnimating }) => {
 
       path += " Z";
 
-      pathRef.current.setAttribute("d", path);
+      if (pathRef.current) {
+        pathRef.current.setAttribute("d", path);
+      }
       animationId = requestAnimationFrame(animate);
     };
 

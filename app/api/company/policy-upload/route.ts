@@ -53,6 +53,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    // Connect to MongoDB for GridFS
+    console.log("🗄️ Connecting to MongoDB for GridFS...");
+    const client = new MongoClient(process.env.MONGODB_URI!);
+    await client.connect();
+    const db = client.db(process.env.MONGODB_DB_NAME);
+    const bucket = new GridFSBucket(db, { bucketName: "policies" });
+
+    // Store original PDF first
+    console.log("💾 Storing original PDF...");
+    const pdfBuffer = Buffer.from(await file.arrayBuffer());
+    const pdfUploadStream = bucket.openUploadStream(file.name, {
+      metadata: {
+        contentType: file.type,
+        companyId: user.companyId.toString(),
+        uploadDate: new Date(),
+        originalName: file.name,
+        originalType: file.type,
+        fileType: "original",
+        fileSize: file.size,
+      },
+    });
+
+    const pdfUploadPromise = new Promise<string>((resolve, reject) => {
+      pdfUploadStream.end(pdfBuffer);
+
+      pdfUploadStream.on("finish", () => {
+        const pdfFileId = pdfUploadStream.id.toString();
+        console.log(`✅ PDF stored successfully with ID: ${pdfFileId}`);
+        resolve(pdfFileId);
+      });
+
+      pdfUploadStream.on("error", (error) => {
+        console.error("❌ PDF upload error:", error);
+        reject(error);
+      });
+    });
+
     // Create FormData for Express server
     console.log("📤 Preparing request to Express server...");
     const serverFormData = new FormData();
@@ -163,44 +200,45 @@ export async function POST(request: NextRequest) {
       console.warn("⚠️ Extraction warnings:", extractResult.metadata.warnings);
     }
 
-    // Connect to MongoDB for GridFS
-    console.log("🗄️ Connecting to MongoDB for GridFS...");
-    const client = new MongoClient(process.env.MONGODB_URI!);
-    await client.connect();
-    const db = client.db(process.env.MONGODB_DB_NAME);
-    const bucket = new GridFSBucket(db, { bucketName: "policies" });
+    // Wait for PDF upload to complete
+    const pdfFileId = await pdfUploadPromise;
 
     // Store extracted text as a text file
     const textFileName = file.name.replace(/\.(pdf|doc|docx)$/i, ".txt");
-    console.log(`💾 Storing as: ${textFileName}`);
+    console.log(`💾 Storing extracted text as: ${textFileName}`);
 
-    const uploadStream = bucket.openUploadStream(textFileName, {
+    const textUploadStream = bucket.openUploadStream(textFileName, {
       metadata: {
         contentType: "text/plain",
         companyId: user.companyId.toString(),
         uploadDate: new Date(),
         originalName: file.name,
         originalType: file.type,
+        fileType: "extracted_text",
         extractedText: true,
         textLength: extractedText.length,
         wordCount: extractedText.split(/\s+/).length,
+        originalFileId: pdfFileId, // Link to original PDF
       },
     });
 
-    return new Promise((resolve) => {
-      uploadStream.end(Buffer.from(extractedText, "utf8"));
+    return new Promise<NextResponse>((resolve) => {
+      textUploadStream.end(Buffer.from(extractedText, "utf8"));
 
-      uploadStream.on("finish", () => {
-        const fileId = uploadStream.id.toString();
-        const url = `/api/company/policy/${fileId}`;
+      textUploadStream.on("finish", () => {
+        const textFileId = textUploadStream.id.toString();
+        const pdfUrl = `/api/company/policy/${pdfFileId}`;
+        const textUrl = `/api/company/policy/${textFileId}`;
 
-        console.log(`✅ File stored successfully with ID: ${fileId}`);
+        console.log(`✅ Text file stored successfully with ID: ${textFileId}`);
 
         client.close();
         resolve(
           NextResponse.json({
-            url,
-            fileId,
+            pdfUrl,
+            textUrl,
+            pdfFileId,
+            textFileId,
             message: "File processed and text extracted successfully",
             textLength: extractedText.length,
             wordCount: extractedText.split(/\s+/).length,
@@ -208,10 +246,12 @@ export async function POST(request: NextRequest) {
         );
       });
 
-      uploadStream.on("error", (error) => {
-        console.error("❌ GridFS upload error:", error);
+      textUploadStream.on("error", (error) => {
+        console.error("❌ GridFS text upload error:", error);
         client.close();
-        resolve(NextResponse.json({ error: "Upload failed" }, { status: 500 }));
+        resolve(
+          NextResponse.json({ error: "Text upload failed" }, { status: 500 })
+        );
       });
     });
   } catch (error) {

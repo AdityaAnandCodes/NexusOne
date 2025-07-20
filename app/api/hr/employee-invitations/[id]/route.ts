@@ -7,9 +7,10 @@ export const runtime = "nodejs";
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
 
     if (!session?.user?.email) {
@@ -28,7 +29,7 @@ export async function DELETE(
       );
     }
 
-    const invitationId = params.id;
+    const invitationId = id;
 
     // Find and delete the invitation
     const invitation = await EmployeeInvitation.findById(invitationId);
@@ -69,9 +70,10 @@ export async function DELETE(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
 
     if (!session?.user?.email) {
@@ -89,7 +91,7 @@ export async function GET(
       );
     }
 
-    const invitationId = params.id;
+    const invitationId = id;
     const invitation = await EmployeeInvitation.findById(invitationId);
 
     if (!invitation) {

@@ -37,7 +37,6 @@ interface Integration {
   color: string;
 }
 
-
 interface JiraUserInfo {
   account_id: string;
   name: string;
@@ -54,7 +53,6 @@ interface JiraAuthStatus {
     url: string;
   }>;
 }
-
 
 export default function Settings() {
   const [notionAuth, setNotionAuth] = useState<boolean>(false);
@@ -128,14 +126,13 @@ export default function Settings() {
     checkAllAuthStatus();
   }, []);
 
- const checkAllAuthStatus = async () => {
-   await Promise.all([
-     checkNotionAuthStatus(),
-     checkGitHubAuthStatus(),
-     checkJiraAuthStatus(),
-   ]);
- };
-
+  const checkAllAuthStatus = async () => {
+    await Promise.all([
+      checkNotionAuthStatus(),
+      checkGitHubAuthStatus(),
+      checkJiraAuthStatus(),
+    ]);
+  };
 
   const checkNotionAuthStatus = async () => {
     try {
@@ -226,7 +223,7 @@ export default function Settings() {
     document.cookie = `jira_oauth_state=${state}; path=/; max-age=600`;
 
     const params = new URLSearchParams({
-      client_id: clientId,
+      client_id: `${clientId}`,
       response_type: "code",
       redirect_uri: redirectUri,
       state: state,
@@ -336,35 +333,35 @@ export default function Settings() {
     }
 
     if (integration.name === "Jira" && jiraUser) {
-    return (
-      <div className="bg-green-50 p-4 rounded-lg text-left mb-4">
-        <div className="flex items-center gap-3 mb-2">
-          <img
-            src={jiraUser.picture}
-            alt={jiraUser.name}
-            className="w-8 h-8 rounded-full"
-          />
-          <div>
-            <p className="text-sm font-semibold">{jiraUser.name}</p>
-            <p className="text-xs text-gray-600">{jiraUser.email}</p>
+      return (
+        <div className="bg-green-50 p-4 rounded-lg text-left mb-4">
+          <div className="flex items-center gap-3 mb-2">
+            <img
+              src={jiraUser.picture}
+              alt={jiraUser.name}
+              className="w-8 h-8 rounded-full"
+            />
+            <div>
+              <p className="text-sm font-semibold">{jiraUser.name}</p>
+              <p className="text-xs text-gray-600">{jiraUser.email}</p>
+            </div>
           </div>
+          {jiraSites.length > 0 && (
+            <div className="mt-2">
+              <p className="text-xs font-semibold">Sites:</p>
+              {jiraSites.map((site) => (
+                <p key={site.id} className="text-xs text-gray-600">
+                  {site.name}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
-        {jiraSites.length > 0 && (
-          <div className="mt-2">
-            <p className="text-xs font-semibold">Sites:</p>
-            {jiraSites.map((site) => (
-              <p key={site.id} className="text-xs text-gray-600">
-                {site.name}
-              </p>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-  
-  return null;
-};
+      );
+    }
+
+    return null;
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 p-8 font-sans">

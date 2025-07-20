@@ -20,11 +20,21 @@ import {
   ChevronRight,
   TrendingUp,
   Clock,
+  FileText,
+  Download,
+  Calendar,
+  Shield,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  hasHRAccess,
+  hasAdminAccess,
+  canManageEmployees,
+  canConfigurePolicies,
+} from "@/lib/utils/roleCheck";
 
 interface DashboardStats {
   totalEmployees: number;
@@ -33,10 +43,39 @@ interface DashboardStats {
   pendingTasks: number;
 }
 
+interface PolicyFile {
+  id: string;
+  filename: string;
+  uploadDate: string;
+  contentType: string;
+  fileSize: number;
+  originalName: string;
+  type: string;
+  url: string;
+  textFileId: string | null;
+  textUrl: string | null;
+  textLength: number | null;
+  wordCount: number | null;
+}
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  companyId: string;
+  department?: string;
+  position?: string;
+  image?: string;
+  emailVerified?: boolean;
+}
+
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [policies, setPolicies] = useState<PolicyFile[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -57,9 +96,29 @@ export default function Dashboard() {
       return;
     }
 
-    // Load dashboard data
+    // Load user profile and dashboard data
+    loadUserProfile();
     loadDashboardData();
+    loadPolicies();
   }, [session, status, router]);
+
+  const loadUserProfile = async () => {
+    try {
+      const response = await fetch("/api/user/profile");
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUserProfile(data.user);
+        } else {
+          console.error("Failed to fetch user profile");
+        }
+      } else {
+        console.error("Failed to fetch user profile");
+      }
+    } catch (error) {
+      console.error("Error loading user profile:", error);
+    }
+  };
 
   const loadDashboardData = async () => {
     try {
@@ -77,11 +136,39 @@ export default function Dashboard() {
     }
   };
 
+  const loadPolicies = async () => {
+    try {
+      const response = await fetch("/api/company/policies");
+      if (response.ok) {
+        const data = await response.json();
+        setPolicies(data.files.slice(0, 5)); // Show only latest 5 on dashboard
+      }
+    } catch (error) {
+      console.error("Error loading policies:", error);
+    }
+  };
+
   const handleSignOut = () => {
     signOut({ callbackUrl: "/" });
   };
 
-  if (status === "loading" || isLoading) {
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  if (status === "loading" || isLoading || !userProfile) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
@@ -100,60 +187,93 @@ export default function Dashboard() {
     );
   }
 
-  const quickActions = [
-    {
-      title: "Manage Employees",
-      description: "Add & invite team members",
-      icon: Users,
-      href: "/hr/employees",
+  // Define quick actions based on user role
+  // Update the getQuickActions function to include Policy Documents for all users
+  const getQuickActions = () => {
+    const actions = [];
+
+    // HR and Admin actions
+    if (canManageEmployees(userProfile.role)) {
+      actions.push({
+        title: "Manage Employees",
+        description: "Add & invite team members",
+        icon: Users,
+        href: "/hr/employees",
+        color: "text-slate-700",
+      });
+    }
+
+    if (canConfigurePolicies(userProfile.role)) {
+      actions.push({
+        title: "Company Setup",
+        description: "Configure policies & onboarding",
+        icon: Settings,
+        href: "/hr/setup",
+        color: "text-slate-700",
+      });
+    }
+
+    // Policy Documents - Available to ALL users (including employees)
+    actions.push({
+      title: "Policy Documents",
+      description:
+        userProfile.role === "employee"
+          ? "View company policies"
+          : "View & manage PDF policies",
+      icon: FileText,
+      href: "/hr/policies",
       color: "text-slate-700",
-    },
-    {
-      title: "Company Setup",
-      description: "Configure policies & onboarding",
-      icon: Settings,
-      href: "/hr/setup",
-      color: "text-slate-700",
-    },
-    {
-      title: "Onboarding Management",
-      description: "Review employee progress",
-      icon: Users,
-      href: "/hr/onboarding",
-      color: "text-slate-700",
-    },
-    {
+    });
+
+    // Common action for all users
+    actions.push({
       title: "Onboarding Chat",
       description: "AI assistant for new hires",
       icon: MessageCircle,
       href: "/onboarding",
       color: "text-slate-700",
-    },
-  ];
+    });
 
-  const secondaryActions = [
-    {
-      title: "Setup Onboarding",
-      description: "Configure onboarding flow",
-      icon: Settings,
-      href: "/onboarding/setup",
-      color: "text-slate-700",
-    },
-    {
-      title: "HR Chat",
-      description: "Internal communication",
-      icon: MessageSquare,
-      href: "/chat/admin",
-      color: "text-slate-700",
-    },
-    {
-      title: "Analytics",
-      description: "Performance insights",
-      icon: BarChart3,
-      href: "/analytics",
-      color: "text-slate-700",
-    },
-  ];
+    return actions;
+  };
+
+  // Define secondary actions based on user role
+  const getSecondaryActions = () => {
+    const actions = [];
+
+    if (hasHRAccess(userProfile.role)) {
+      actions.push({
+        title: "Setup Onboarding",
+        description: "Configure onboarding flow",
+        icon: Settings,
+        href: "/onboarding/setup",
+        color: "text-slate-700",
+      });
+
+      actions.push({
+        title: "HR Chat",
+        description: "Internal communication",
+        icon: MessageSquare,
+        href: "/chat/admin",
+        color: "text-slate-700",
+      });
+    }
+
+    if (hasAdminAccess(userProfile.role)) {
+      actions.push({
+        title: "Analytics",
+        description: "Performance insights",
+        icon: BarChart3,
+        href: "/analytics",
+        color: "text-slate-700",
+      });
+    }
+
+    return actions;
+  };
+
+  const quickActions = getQuickActions();
+  const secondaryActions = getSecondaryActions();
 
   const recentActivities = [
     {
@@ -175,6 +295,28 @@ export default function Dashboard() {
       color: "bg-slate-200 text-slate-800",
     },
   ];
+
+  const getRoleDisplayName = (role: string) => {
+    const roleMap = {
+      super_admin: "Super Admin",
+      company_admin: "Company Admin",
+      hr_manager: "HR Manager",
+      employee: "Employee",
+    };
+    return roleMap[role as keyof typeof roleMap] || role;
+  };
+
+  const getRoleBadgeColor = (role: string) => {
+    const colorMap = {
+      super_admin: "bg-purple-100 text-purple-800",
+      company_admin: "bg-blue-100 text-blue-800",
+      hr_manager: "bg-green-100 text-green-800",
+      employee: "bg-gray-100 text-gray-800",
+    };
+    return (
+      colorMap[role as keyof typeof colorMap] || "bg-gray-100 text-gray-800"
+    );
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -206,14 +348,26 @@ export default function Dashboard() {
                   >
                     NexusOne
                   </h1>
-                  <p
-                    className="text-sm text-gray-600"
-                    style={{
-                      fontFamily: "Inter, system-ui, sans-serif",
-                    }}
-                  >
-                    Welcome back, {session?.user?.name}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p
+                      className="text-sm text-gray-600"
+                      style={{
+                        fontFamily: "Inter, system-ui, sans-serif",
+                      }}
+                    >
+                      Welcome back, {session?.user?.name}
+                      {userProfile.position && ` • ${userProfile.position}`}
+                      {userProfile.department && ` • ${userProfile.department}`}
+                    </p>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(
+                        userProfile.role
+                      )}`}
+                    >
+                      <Shield className="h-3 w-3 inline mr-1" />
+                      {getRoleDisplayName(userProfile.role)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -275,213 +429,337 @@ export default function Dashboard() {
               fontFamily: "Inter, system-ui, sans-serif",
             }}
           >
-            Manage your company's onboarding process and track progress
+            {hasHRAccess(userProfile.role)
+              ? "Manage your company's onboarding process and track progress"
+              : "Access your onboarding materials and company resources"}
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <Card className="bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="pb-3">
-              <CardTitle
-                className="text-lg font-semibold flex items-center gap-2"
-                style={{
-                  fontFamily: "Inter, system-ui, sans-serif",
-                  color: "#0E0E0E",
-                }}
-              >
-                <Users className="h-5 w-5 text-slate-700" />
-                Total Employees
-              </CardTitle>
-              <CardDescription
-                className="text-gray-600"
-                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-              >
-                All registered users
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div
-                className="text-3xl font-bold text-gray-900 flex items-center gap-2"
-                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-              >
-                {stats?.totalEmployees || 0}
-                <TrendingUp className="h-5 w-5 text-slate-600" />
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stats Cards - Only show to HR and Admin */}
+        {hasHRAccess(userProfile.role) && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <Card className="bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader className="pb-3">
+                <CardTitle
+                  className="text-lg font-semibold flex items-center gap-2"
+                  style={{
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    color: "#0E0E0E",
+                  }}
+                >
+                  <Users className="h-5 w-5 text-slate-700" />
+                  Total Employees
+                </CardTitle>
+                <CardDescription
+                  className="text-gray-600"
+                  style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                >
+                  All registered users
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className="text-3xl font-bold text-gray-900 flex items-center gap-2"
+                  style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                >
+                  {stats?.totalEmployees || 0}
+                  <TrendingUp className="h-5 w-5 text-slate-600" />
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card className="bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="pb-3">
-              <CardTitle
-                className="text-lg font-semibold flex items-center gap-2"
-                style={{
-                  fontFamily: "Inter, system-ui, sans-serif",
-                  color: "#0E0E0E",
-                }}
-              >
-                <Clock className="h-5 w-5 text-slate-700" />
-                Active Onboarding
-              </CardTitle>
-              <CardDescription
-                className="text-gray-600"
-                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-              >
-                Currently in progress
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div
-                className="text-3xl font-bold text-slate-800"
-                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-              >
-                {stats?.activeOnboarding || 0}
-              </div>
-            </CardContent>
-          </Card>
+            <Card className="bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader className="pb-3">
+                <CardTitle
+                  className="text-lg font-semibold flex items-center gap-2"
+                  style={{
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    color: "#0E0E0E",
+                  }}
+                >
+                  <Clock className="h-5 w-5 text-slate-700" />
+                  Active Onboarding
+                </CardTitle>
+                <CardDescription
+                  className="text-gray-600"
+                  style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                >
+                  Currently in progress
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className="text-3xl font-bold text-slate-800"
+                  style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                >
+                  {stats?.activeOnboarding || 0}
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card className="bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="pb-3">
-              <CardTitle
-                className="text-lg font-semibold flex items-center gap-2"
-                style={{
-                  fontFamily: "Inter, system-ui, sans-serif",
-                  color: "#0E0E0E",
-                }}
-              >
-                <MessageSquare className="h-5 w-5 text-slate-700" />
-                Completed
-              </CardTitle>
-              <CardDescription
-                className="text-gray-600"
-                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-              >
-                Finished onboarding
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div
-                className="text-3xl font-bold text-slate-800"
-                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-              >
-                {stats?.completedOnboarding || 0}
-              </div>
-            </CardContent>
-          </Card>
+            <Card className="bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader className="pb-3">
+                <CardTitle
+                  className="text-lg font-semibold flex items-center gap-2"
+                  style={{
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    color: "#0E0E0E",
+                  }}
+                >
+                  <MessageSquare className="h-5 w-5 text-slate-700" />
+                  Completed
+                </CardTitle>
+                <CardDescription
+                  className="text-gray-600"
+                  style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                >
+                  Finished onboarding
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className="text-3xl font-bold text-slate-800"
+                  style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                >
+                  {stats?.completedOnboarding || 0}
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card className="bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="pb-3">
-              <CardTitle
-                className="text-lg font-semibold flex items-center gap-2"
-                style={{
-                  fontFamily: "Inter, system-ui, sans-serif",
-                  color: "#0E0E0E",
-                }}
-              >
-                <Bell className="h-5 w-5 text-slate-700" />
-                Pending Tasks
-              </CardTitle>
-              <CardDescription
-                className="text-gray-600"
-                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-              >
-                Require attention
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div
-                className="text-3xl font-bold text-slate-800"
-                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-              >
-                {stats?.pendingTasks || 0}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mb-12">
-          <h3
-            className="text-2xl font-bold mb-6"
-            style={{
-              fontFamily: "Inter, system-ui, sans-serif",
-              color: "#0E0E0E",
-            }}
-          >
-            Quick Actions
-          </h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {quickActions.map((action, index) => (
-              <Link key={index} href={action.href}>
-                <Card className="group bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:border-gray-400 transition-all duration-300 cursor-pointer">
-                  <CardContent className="p-6 text-center">
-                    <action.icon
-                      className={`h-8 w-8 ${action.color} mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}
-                    />
-                    <h3
-                      className="font-semibold text-lg mb-2"
-                      style={{
-                        fontFamily: "Inter, system-ui, sans-serif",
-                        color: "#0E0E0E",
-                      }}
-                    >
-                      {action.title}
-                    </h3>
-                    <p
-                      className="text-gray-600 text-sm mb-3"
-                      style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-                    >
-                      {action.description}
-                    </p>
-                    <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-black group-hover:translate-x-1 transition-all mx-auto" />
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+            <Card className="bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader className="pb-3">
+                <CardTitle
+                  className="text-lg font-semibold flex items-center gap-2"
+                  style={{
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    color: "#0E0E0E",
+                  }}
+                >
+                  <Bell className="h-5 w-5 text-slate-700" />
+                  Pending Tasks
+                </CardTitle>
+                <CardDescription
+                  className="text-gray-600"
+                  style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                >
+                  Require attention
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className="text-3xl font-bold text-slate-800"
+                  style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                >
+                  {stats?.pendingTasks || 0}
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </div>
+        )}
 
-        {/* Secondary Actions */}
-        <div className="mb-12">
-          <h3
-            className="text-2xl font-bold mb-6"
-            style={{
-              fontFamily: "Inter, system-ui, sans-serif",
-              color: "#0E0E0E",
-            }}
-          >
-            Additional Tools
-          </h3>
-          <div className="grid md:grid-cols-3 gap-6">
-            {secondaryActions.map((action, index) => (
-              <Link key={index} href={action.href}>
-                <Card className="group bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:border-gray-400 transition-all duration-300 cursor-pointer">
-                  <CardContent className="p-6 text-center">
-                    <action.icon
-                      className={`h-8 w-8 ${action.color} mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}
-                    />
-                    <h3
-                      className="font-semibold text-lg mb-2"
-                      style={{
-                        fontFamily: "Inter, system-ui, sans-serif",
-                        color: "#0E0E0E",
-                      }}
-                    >
-                      {action.title}
-                    </h3>
-                    <p
-                      className="text-gray-600 text-sm mb-3"
-                      style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-                    >
-                      {action.description}
-                    </p>
-                    <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-black group-hover:translate-x-1 transition-all mx-auto" />
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+        {/* Quick Actions - Role-based */}
+        {quickActions.length > 0 && (
+          <div className="mb-12">
+            <h3
+              className="text-2xl font-bold mb-6"
+              style={{
+                fontFamily: "Inter, system-ui, sans-serif",
+                color: "#0E0E0E",
+              }}
+            >
+              Quick Actions
+            </h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {quickActions.map((action, index) => (
+                <Link key={index} href={action.href}>
+                  <Card className="group bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:border-gray-400 transition-all duration-300 cursor-pointer">
+                    <CardContent className="p-6 text-center">
+                      <action.icon
+                        className={`h-8 w-8 ${action.color} mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}
+                      />
+                      <h3
+                        className="font-semibold text-lg mb-2"
+                        style={{
+                          fontFamily: "Inter, system-ui, sans-serif",
+                          color: "#0E0E0E",
+                        }}
+                      >
+                        {action.title}
+                      </h3>
+                      <p
+                        className="text-gray-600 text-sm mb-3"
+                        style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                      >
+                        {action.description}
+                      </p>
+                      <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-black group-hover:translate-x-1 transition-all mx-auto" />
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Recent Policy Documents - Show to HR+ */}
+        {hasHRAccess(userProfile.role) && (
+          <div className="mb-12">
+            <div className="flex justify-between items-center mb-6">
+              <h3
+                className="text-2xl font-bold"
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  color: "#0E0E0E",
+                }}
+              >
+                Recent Policy Documents
+              </h3>
+              <Link href="/hr/policies">
+                <Button className="bg-black text-white hover:bg-gray-900 rounded-xl">
+                  View All Policies
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+
+            {policies.length > 0 ? (
+              <Card className="bg-white border border-gray-200 rounded-xl shadow-lg">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {policies.map((policy) => (
+                      <div
+                        key={policy.id}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-300"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-red-100 text-red-600 rounded-xl flex items-center justify-center">
+                            <FileText className="h-6 w-6" />
+                          </div>
+                          <div className="flex-1">
+                            <h4
+                              className="font-semibold text-lg"
+                              style={{
+                                fontFamily: "Inter, system-ui, sans-serif",
+                                color: "#0E0E0E",
+                              }}
+                            >
+                              {policy.originalName}
+                            </h4>
+                            <div className="flex items-center gap-4 text-sm text-gray-600">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                {formatDate(policy.uploadDate)}
+                              </span>
+                              <span>{formatFileSize(policy.fileSize)}</span>
+                              {policy.textLength && (
+                                <span>{policy.wordCount} words</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-lg"
+                            onClick={() => window.open(policy.url, "_blank")}
+                          >
+                            <Download className="h-4 w-4 mr-1" />
+                            PDF
+                          </Button>
+                          {policy.textUrl && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="rounded-lg"
+                              onClick={() =>
+                                window.open(policy.textUrl!, "_blank")
+                              }
+                            >
+                              <FileText className="h-4 w-4 mr-1" />
+                              Text
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="bg-white border border-gray-200 rounded-xl shadow-lg">
+                <CardContent className="p-12 text-center">
+                  <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h4
+                    className="text-xl font-semibold mb-2"
+                    style={{
+                      fontFamily: "Inter, system-ui, sans-serif",
+                      color: "#0E0E0E",
+                    }}
+                  >
+                    No Policy Documents Yet
+                  </h4>
+                  <p
+                    className="text-gray-600 mb-6"
+                    style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                  >
+                    Upload your first policy document to get started with
+                    automated onboarding assistance.
+                  </p>
+                  <Link href="/hr/setup">
+                    <Button className="bg-black text-white hover:bg-gray-900 rounded-xl">
+                      Upload Policy Document
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Secondary Actions - Role-based */}
+        {secondaryActions.length > 0 && (
+          <div className="mb-12">
+            <h3
+              className="text-2xl font-bold mb-6"
+              style={{
+                fontFamily: "Inter, system-ui, sans-serif",
+                color: "#0E0E0E",
+              }}
+            >
+              Additional Tools
+            </h3>
+            <div className="grid md:grid-cols-3 gap-6">
+              {secondaryActions.map((action, index) => (
+                <Link key={index} href={action.href}>
+                  <Card className="group bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:border-gray-400 transition-all duration-300 cursor-pointer">
+                    <CardContent className="p-6 text-center">
+                      <action.icon
+                        className={`h-8 w-8 ${action.color} mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}
+                      />
+                      <h3
+                        className="font-semibold text-lg mb-2"
+                        style={{
+                          fontFamily: "Inter, system-ui, sans-serif",
+                          color: "#0E0E0E",
+                        }}
+                      >
+                        {action.title}
+                      </h3>
+                      <p
+                        className="text-gray-600 text-sm mb-3"
+                        style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+                      >
+                        {action.description}
+                      </p>
+                      <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-black group-hover:translate-x-1 transition-all mx-auto" />
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Recent Activity */}
         <Card className="bg-white border border-gray-200 rounded-xl shadow-lg">
@@ -499,7 +777,9 @@ export default function Dashboard() {
               className="text-gray-600"
               style={{ fontFamily: "Inter, system-ui, sans-serif" }}
             >
-              Latest onboarding updates and employee progress
+              {hasHRAccess(userProfile.role)
+                ? "Latest onboarding updates and employee progress"
+                : "Your recent activity and updates"}
             </CardDescription>
           </CardHeader>
           <CardContent>
